@@ -1,0 +1,151 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Dark mode first — forced via class on <html> */
+:root {
+  /* Dark (default) */
+  --background: #1a1a1d;
+  --foreground: #e8e4df;
+  --muted: #242427;
+  --muted-foreground: #9a9590;
+  --border: #2e2e32;
+  --accent: #a01a2a;
+  --accent-hover: #c4223a;
+  --accent-foreground: #f5f0eb;
+  --accent-light: #a01a2a18;
+  --surface: #212124;
+  --glow: #a01a2a30;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #faf7f2;
+    --foreground: #1a1a1a;
+    --muted: #f0ebe3;
+    --muted-foreground: #6b6056;
+    --border: #e0d6c8;
+    --accent: #8b1a2b;
+    --accent-hover: #6a0f1d;
+    --accent-foreground: #faf7f2;
+    --accent-light: #8b1a2b10;
+    --surface: #ffffff;
+    --glow: #8b1a2b15;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-light: var(--accent-light);
+  --color-surface: var(--surface);
+  --color-glow: var(--glow);
+  --font-display: var(--font-sora);
+  --font-body: var(--font-dm-sans);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ── Staggered entrance ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.8s ease both;
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-left {
+  animation: slide-in-left 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Floating animation for hero decorations ── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) rotate(2deg); }
+}
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
+}
+
+/* ── Pulse glow for accent elements ── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--glow); }
+  50%      { box-shadow: 0 0 30px 8px var(--glow); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* ── Noise grain overlay ── */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ── Smooth underline reveal ── */
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+.link-underline:hover::after {
+  width: 100%;
+}
+
+/* ── Gradient mesh background for hero ── */
+.hero-gradient {
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 40%, var(--glow) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, var(--glow) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 50% 80%, #56131308 0%, transparent 70%);
+}
+
+/* ── Selection color ── */
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
