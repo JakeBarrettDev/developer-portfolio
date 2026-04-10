@@ -24,6 +24,13 @@ export const metadata: Metadata = {
   },
   description:
     "Full-stack developer passionate about clean UI and thoughtful backend logic.",
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: { url: "/favicon.png", sizes: "180x180", type: "image/png" },
+  },
 };
 
 export default function RootLayout({

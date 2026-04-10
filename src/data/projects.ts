@@ -18,8 +18,8 @@ export const projects: Project[] = [
     techStack: ["JavaScript", "React", "Spring Boot", "Spring Security", "PostgreSQL", "Redis", "Nginx"],
     githubUrl: "https://github.com/JakeBarrettDev",
     liveDemoUrl: undefined,
-    thumbnail: "/projects/swesso-thumb.svg",
-    previewVideo: undefined,
+    thumbnail: "/projects/swesso-thumb.jpg",
+    previewVideo: "/projects/swesso-preview.mp4",
   },
   {
     slug: "jeff-conners",
@@ -29,8 +29,8 @@ export const projects: Project[] = [
     techStack: ["Astro", "JavaScript", "Cloudflare Pages"],
     githubUrl: "https://github.com/JakeBarrettDev",
     liveDemoUrl: "https://jeffconners.art",
-    thumbnail: "/projects/jeff-conners-thumb.svg",
-    previewVideo: undefined,
+    thumbnail: "/projects/jeff-conners-thumb.jpg",
+    previewVideo: "/projects/jeff-conners-preview.mp4",
   },
   {
     slug: "tetrad-build",
@@ -40,8 +40,8 @@ export const projects: Project[] = [
     techStack: ["Next.js", "Vercel"],
     githubUrl: "https://github.com/JakeBarrettDev",
     liveDemoUrl: "https://tetradbuild.com",
-    thumbnail: "/projects/tetrad-build-thumb.svg",
-    previewVideo: undefined,
+    thumbnail: "/projects/tetrad-build-thumb.jpg",
+    previewVideo: "/projects/tetrad-build-preview.mp4",
   },
   {
     slug: "maroon-raccoon",
@@ -51,7 +51,7 @@ export const projects: Project[] = [
     techStack: ["Next.js", "Vercel"],
     githubUrl: "https://github.com/JakeBarrettDev",
     liveDemoUrl: "https://maroonraccoon.dev",
-    thumbnail: "/projects/maroon-raccoon-thumb.svg",
-    previewVideo: undefined,
+    thumbnail: "/projects/maroon-raccoon-thumb.jpg",
+    previewVideo: "/projects/maroon-raccoon-preview.mp4",
   },
 ];
