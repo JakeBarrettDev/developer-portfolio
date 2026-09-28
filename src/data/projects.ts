@@ -7,7 +7,8 @@ export interface Project {
   liveDemoUrl?: string;
   thumbnail: string;
   previewVideo?: string;
-  status?: "in-progress";
+  /** "live" = shipped and publicly reachable at liveDemoUrl. */
+  status?: "live" | "in-progress";
   /** Shown on the homepage and as a full-width card on /projects. */
   featured?: boolean;
   /** Hover glow color for this project's card. */
@@ -26,6 +27,7 @@ export const projects: Project[] = [
     githubUrl: "https://github.com/JakeBarrettDev",
     liveDemoUrl: "https://tombstone-video.vercel.app",
     thumbnail: "/projects/tombstone-video-thumb.jpg",
+    status: "live",
   },
   {
     slug: "cartomancer",
@@ -47,9 +49,10 @@ export const projects: Project[] = [
       "A Tinder-style artwork matching app that helps users discover art they love. Swipe through curated artwork and build a personalized collection based on your taste. Built as a LaunchCode capstone project.",
     techStack: ["JavaScript", "React", "Spring Boot", "Spring Security", "PostgreSQL", "Redis", "Nginx"],
     githubUrl: "https://github.com/JakeBarrettDev",
-    liveDemoUrl: undefined,
+    liveDemoUrl: "https://swesso.com",
     thumbnail: "/projects/swesso-thumb.jpg",
     previewVideo: "/projects/swesso-preview.mp4",
+    status: "live",
   },
   {
     slug: "jeff-conners",
@@ -62,6 +65,7 @@ export const projects: Project[] = [
     liveDemoUrl: "https://jeffconners.art",
     thumbnail: "/projects/jeff-conners-thumb.jpg",
     previewVideo: "/projects/jeff-conners-preview.mp4",
+    status: "live",
   },
   {
     slug: "tetrad-build",
@@ -71,7 +75,6 @@ export const projects: Project[] = [
       "Business website for Tetrad Build, providing an online presence and information about their services.",
     techStack: ["Next.js", "Vercel"],
     githubUrl: "https://github.com/JakeBarrettDev",
-    liveDemoUrl: "https://tetradbuild.com",
     thumbnail: "/projects/tetrad-build-thumb.jpg",
     previewVideo: "/projects/tetrad-build-preview.mp4",
   },
@@ -86,5 +89,6 @@ export const projects: Project[] = [
     liveDemoUrl: "https://maroonraccoon.dev",
     thumbnail: "/projects/maroon-raccoon-thumb.jpg",
     previewVideo: "/projects/maroon-raccoon-preview.mp4",
+    status: "live",
   },
 ];
