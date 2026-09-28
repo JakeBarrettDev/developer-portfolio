@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { projects } from "@/data/projects";
 import ProjectCard from "@/components/project-card";
+import Reveal from "@/components/reveal";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -25,21 +26,18 @@ export default function ProjectsPage() {
 
       <div className="grid gap-8 sm:grid-cols-2">
         {projects.map((project, i) => (
-          <div
+          <Reveal
             key={project.slug}
-            className="animate-fade-up"
-            style={{ animationDelay: `${150 + i * 120}ms` }}
+            className={project.featured ? "sm:col-span-2" : undefined}
+            delay={project.featured ? 0 : (i % 2) * 120}
           >
-            <ProjectCard project={project} />
-          </div>
+            <ProjectCard project={project} wide={project.featured} />
+          </Reveal>
         ))}
       </div>
 
       {/* Call to action */}
-      <div
-        className="animate-fade-up rounded-2xl border border-border bg-surface p-8 text-center"
-        style={{ animationDelay: `${150 + projects.length * 120 + 100}ms` }}
-      >
+      <Reveal className="rounded-2xl border border-border bg-surface p-8 text-center">
         <p className="font-display text-lg font-semibold">
           Want to build something together?
         </p>
@@ -52,7 +50,7 @@ export default function ProjectsPage() {
         >
           Let&apos;s Talk
         </a>
-      </div>
+      </Reveal>
     </div>
   );
 }

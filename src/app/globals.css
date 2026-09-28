@@ -149,3 +149,133 @@ body {
   background: var(--accent);
   color: var(--accent-foreground);
 }
+
+/* ── Scroll reveal (see components/reveal.tsx) ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
+}
+.reveal-left {
+  transform: translateX(-24px);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (scripting: none) {
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* ── Project cards: per-project accent, cursor spotlight, tilt ── */
+.project-card {
+  --card-accent: var(--accent);
+  --mx: 50%;
+  --my: 50%;
+  --rx: 0deg;
+  --ry: 0deg;
+  transform: perspective(1000px) rotateX(var(--ry)) rotateY(var(--rx));
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+.project-card:hover {
+  transition:
+    transform 0.12s ease-out,
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+  border-color: color-mix(in srgb, var(--card-accent) 45%, transparent);
+  box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--card-accent) 55%, transparent);
+}
+/* Soft glow that follows the cursor across the card */
+.project-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    420px circle at var(--mx) var(--my),
+    color-mix(in srgb, var(--card-accent) 14%, transparent),
+    transparent 65%
+  );
+}
+/* Brighter ring on the border nearest the cursor */
+.project-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    260px circle at var(--mx) var(--my),
+    var(--card-accent),
+    transparent 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.project-card:hover::before,
+.project-card:hover::after {
+  opacity: 1;
+}
+.project-card:hover .project-card-title {
+  color: var(--card-accent);
+}
+.project-card:hover .project-card-pill {
+  border-color: color-mix(in srgb, var(--card-accent) 35%, transparent);
+}
+
+/* ── Hero glow that trails the cursor (see components/hero-spotlight.tsx) ── */
+.hero-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  background: radial-gradient(
+    500px circle at var(--hx, 50%) var(--hy, 40%),
+    var(--glow),
+    transparent 70%
+  );
+}
+.hero-spotlight:hover::before {
+  opacity: 1;
+}
+
+/* ── Role cycler ── */
+@keyframes role-in {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-role-in {
+  animation: role-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Respect reduced-motion preferences ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal,
+  .project-card {
+    transform: none !important;
+  }
+}

@@ -1,12 +1,22 @@
 import { ArrowRight, Code2, Music, Dog, Briefcase } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import HeroSpotlight from "@/components/hero-spotlight";
+import RoleCycler from "@/components/role-cycler";
+import Reveal from "@/components/reveal";
+import ProjectCard from "@/components/project-card";
+import { projects } from "@/data/projects";
+
+const roles = ["Full-Stack Developer", "QA Automation Engineer", "Freelance Web Builder", "Tabletop Worldbuilder"];
 
 export default function Home() {
+  const featured = projects.filter((p) => p.featured);
+  const building = projects.find((p) => p.status === "in-progress");
+
   return (
     <div className="space-y-32">
       {/* ── Hero ── */}
-      <section className="hero-gradient relative -mx-6 -mt-16 px-6 pb-24 pt-24 sm:pt-32">
+      <HeroSpotlight className="hero-gradient relative -mx-6 -mt-16 px-6 pb-24 pt-24 sm:pt-32">
         {/* Decorative shapes */}
         <div className="pointer-events-none absolute left-8 top-20 h-32 w-32 animate-float rounded-full border border-accent/10 opacity-40 sm:left-16 sm:h-48 sm:w-48" />
         <div className="pointer-events-none absolute right-12 top-40 h-20 w-20 animate-float-delayed rounded-full bg-accent/5 opacity-60 sm:right-24 sm:h-28 sm:w-28" />
@@ -35,11 +45,25 @@ export default function Home() {
 
           {/* Text */}
           <div className="text-center sm:text-left">
+            {building && (
+              <Link
+                href="/projects"
+                className="animate-fade-up mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm transition-colors hover:border-accent/40 hover:text-foreground"
+                style={{ animationDelay: "50ms" }}
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+                </span>
+                Currently building{" "}
+                <span className="font-semibold text-foreground">{building.title}</span>
+              </Link>
+            )}
             <p
               className="animate-fade-up text-xs font-bold tracking-[0.3em] text-accent uppercase"
               style={{ animationDelay: "100ms" }}
             >
-              Full-Stack Developer
+              <RoleCycler roles={roles} />
             </p>
             <h1
               className="animate-fade-up mt-4 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl"
@@ -82,20 +106,40 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </HeroSpotlight>
+
+      {/* ── Featured work ── */}
+      <section>
+        <Reveal from="left" className="flex items-center gap-4">
+          <h2 className="whitespace-nowrap font-display text-3xl font-bold">Featured Work</h2>
+          <div className="hidden h-px flex-1 bg-gradient-to-r from-border to-transparent sm:block" />
+          <Link
+            href="/projects"
+            className="group ml-auto inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-accent"
+          >
+            See all projects
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </Reveal>
+
+        <div className="mt-10 space-y-8">
+          {featured.map((project, i) => (
+            <Reveal key={project.slug} delay={i * 120}>
+              <ProjectCard project={project} wide />
+            </Reveal>
+          ))}
+        </div>
       </section>
 
       {/* ── About ── */}
       <section>
-        <div
-          className="animate-slide-left flex items-center gap-4"
-          style={{ animationDelay: "500ms" }}
-        >
+        <Reveal from="left" className="flex items-center gap-4">
           <h2 className="font-display text-3xl font-bold">About Me</h2>
           <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
-        </div>
+        </Reveal>
 
         <div className="mt-10 grid gap-10 sm:grid-cols-5">
-          <div className="space-y-5 sm:col-span-3">
+          <Reveal className="space-y-5 sm:col-span-3">
             <p className="text-base leading-relaxed text-muted-foreground">
               I&apos;m a full-stack developer who loves building things that make
               people say &ldquo;Whoa.&rdquo; I work primarily with React,
@@ -123,7 +167,7 @@ export default function Home() {
               maintaining a Squarespace site I built from scratch, and I run my
               own LLC building sites for artists and businesses.
             </p>
-          </div>
+          </Reveal>
 
           <div className="flex flex-col gap-4 sm:col-span-2">
             {[
@@ -148,19 +192,17 @@ export default function Home() {
                 text: "Running Maroon Raccoon, building for clients.",
               },
             ].map(({ icon: Icon, title, text }, i) => (
-              <div
-                key={title}
-                className="animate-fade-up group rounded-xl border border-border bg-surface p-5 transition-all hover:border-accent/30 hover:shadow-lg hover:shadow-glow"
-                style={{ animationDelay: `${600 + i * 100}ms` }}
-              >
-                <Icon className="mb-3 h-5 w-5 text-accent transition-transform group-hover:scale-110" />
-                <h3 className="font-display text-sm font-bold uppercase tracking-wider">
-                  {title}
-                </h3>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  {text}
-                </p>
-              </div>
+              <Reveal key={title} delay={100 + i * 100}>
+                <div className="group rounded-xl border border-border bg-surface p-5 transition-all hover:border-accent/30 hover:shadow-lg hover:shadow-glow">
+                  <Icon className="mb-3 h-5 w-5 text-accent transition-transform group-hover:scale-110" />
+                  <h3 className="font-display text-sm font-bold uppercase tracking-wider">
+                    {title}
+                  </h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {text}
+                  </p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
