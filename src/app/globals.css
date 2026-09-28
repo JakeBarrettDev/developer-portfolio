@@ -144,6 +144,21 @@ body {
     radial-gradient(ellipse 50% 40% at 50% 80%, #56131308 0%, transparent 70%);
 }
 
+/* Fade the hero gradient out at its edges so it has no visible box */
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
+    linear-gradient(to bottom, #000 60%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, #000 15%, #000 85%, transparent),
+    linear-gradient(to bottom, #000 60%, transparent);
+  mask-composite: intersect;
+}
+
 /* ── Selection color ── */
 ::selection {
   background: var(--accent);
@@ -265,6 +280,26 @@ body {
   animation: role-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* ── Tech marquee (projects hero) ── */
+.marquee {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-50% - 0.375rem)); }
+}
+.marquee-track {
+  animation: marquee 40s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
 /* ── Respect reduced-motion preferences ── */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -275,7 +310,19 @@ body {
     transition-duration: 0.01ms !important;
   }
   .reveal,
-  .project-card {
+  .project-card,
+  .marquee-track {
     transform: none !important;
+  }
+  .marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .marquee-track {
+    flex-wrap: wrap;
+    width: auto;
+  }
+  .marquee-track > [aria-hidden="true"] {
+    display: none;
   }
 }

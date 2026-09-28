@@ -16,7 +16,8 @@ export default function Home() {
   return (
     <div className="space-y-32">
       {/* ── Hero ── */}
-      <HeroSpotlight className="hero-gradient relative -mx-6 -mt-16 px-6 pb-24 pt-24 sm:pt-32">
+      <HeroSpotlight className="relative -mx-6 -mt-16 px-6 pb-24 pt-24 sm:pt-32">
+        <div className="hero-backdrop hero-gradient" />
         {/* Decorative shapes */}
         <div className="pointer-events-none absolute left-8 top-20 h-32 w-32 animate-float rounded-full border border-accent/10 opacity-40 sm:left-16 sm:h-48 sm:w-48" />
         <div className="pointer-events-none absolute right-12 top-40 h-20 w-20 animate-float-delayed rounded-full bg-accent/5 opacity-60 sm:right-24 sm:h-28 sm:w-28" />
