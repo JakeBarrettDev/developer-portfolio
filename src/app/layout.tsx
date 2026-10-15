@@ -17,11 +17,11 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Jake Barrett — Developer",
+    default: "Jake Barrett — QA Automation Engineer & Web Developer",
     template: "%s | Jake Barrett",
   },
   description:
-    "Full-stack developer passionate about clean UI and thoughtful backend logic.",
+    "QA automation engineer at VML writing Playwright suites, and founder of Maroon Raccoon, building websites for artists and small businesses.",
   icons: {
     icon: [
       { url: "/favicon.png", sizes: "32x32", type: "image/png" },

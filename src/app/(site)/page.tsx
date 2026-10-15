@@ -1,13 +1,11 @@
-import { ArrowRight, Code2, Music, Dog, Briefcase } from "lucide-react";
+import { ArrowRight, Code2, Music, Dog, Briefcase, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import HeroSpotlight from "@/components/hero-spotlight";
-import RoleCycler from "@/components/role-cycler";
 import Reveal from "@/components/reveal";
 import ProjectCard from "@/components/project-card";
+import LabTeaser from "@/components/lab-teaser";
 import { projects } from "@/data/projects";
-
-const roles = ["Full-Stack Developer", "QA Automation Engineer", "Freelance Web Builder", "Tabletop Worldbuilder"];
 
 export default function Home() {
   const featured = projects.filter((p) => p.featured);
@@ -64,50 +62,85 @@ export default function Home() {
               className="animate-fade-up text-xs font-bold tracking-[0.3em] text-accent uppercase"
               style={{ animationDelay: "100ms" }}
             >
-              <RoleCycler roles={roles} />
+              Jake Barrett
             </p>
             <h1
-              className="animate-fade-up mt-4 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl"
+              className="animate-fade-up mt-4 max-w-2xl font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]"
               style={{ animationDelay: "200ms" }}
             >
-              Hey, I&apos;m{" "}
-              <span className="relative">
-                Jake
+              I test software at{" "}
+              <span className="relative whitespace-nowrap">
+                VML
                 <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-accent/30" />
-              </span>
-              .
+              </span>{" "}
+              and build websites for artists and small businesses.
             </h1>
             <p
-              className="animate-fade-up mt-5 max-w-md text-lg leading-relaxed text-muted-foreground"
+              className="animate-fade-up mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground"
               style={{ animationDelay: "300ms" }}
             >
-              I build things for the web that are clean, fast, and fun to use.
-              Currently doing QA automation at{" "}
-              <span className="font-medium text-foreground">VML</span> and
-              freelancing through{" "}
-              <span className="font-medium text-accent">Maroon Raccoon</span>.
+              By day I write automated test suites in Playwright. Through my
+              LLC,{" "}
+              <a href="https://maroonraccoon.dev" target="_blank" rel="noopener noreferrer" className="font-medium text-accent hover:underline">
+                Maroon Raccoon
+              </a>
+              , I design and build fast, accessible sites for people who&apos;d
+              rather be making things.
             </p>
             <div
               className="animate-fade-up mt-8 flex flex-wrap justify-center gap-4 sm:justify-start"
               style={{ animationDelay: "400ms" }}
             >
               <Link
-                href="/projects"
+                href="/lab"
                 className="group inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-glow"
               >
-                View My Work
+                <span className="font-normal opacity-80">Hiring?</span> Try my Playwright Lab
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-semibold transition-all hover:border-accent/40 hover:bg-accent-light hover:text-accent"
               >
-                Get in Touch
+                <span className="font-normal text-muted-foreground">Need a site?</span> Let&apos;s talk
               </Link>
             </div>
           </div>
         </div>
       </HeroSpotlight>
+
+      {/* ── Playwright Lab ── */}
+      <section className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+        <Reveal from="left">
+          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em] text-accent">
+            <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
+            Playwright Lab
+          </p>
+          <h2 className="mt-4 font-display text-3xl font-bold leading-tight sm:text-4xl">
+            Record a test. I&apos;ll explain every line.
+          </h2>
+          <p className="mt-4 leading-relaxed text-muted-foreground">
+            I write Playwright suites for a living. The Lab turns your clicks in a mini version of my art app into
+            the test I&apos;d write, then reviews any locator you swap in: strict-mode violations, DevTools XPath,
+            order-dependent <code className="font-mono text-sm text-foreground">nth()</code> and the rest.
+          </p>
+          <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
+            <li><span className="font-medium text-foreground">Locate like a user.</span> Roles and labels before CSS.</li>
+            <li><span className="font-medium text-foreground">Assert, don&apos;t wait.</span> Web-first assertions, no sleeps.</li>
+            <li><span className="font-medium text-foreground">Verified for real.</span> The exported code runs in Playwright.</li>
+          </ul>
+          <Link
+            href="/lab"
+            className="group mt-7 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-glow"
+          >
+            Open the Lab
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </Reveal>
+        <Reveal delay={100}>
+          <LabTeaser />
+        </Reveal>
+      </section>
 
       {/* ── Featured work ── */}
       <section>

@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import Image from "next/image";
-import { ExternalLink, ArrowUpRight } from "lucide-react";
+import { ExternalLink, ArrowUpRight, Lock } from "lucide-react";
 import { GitHubIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/data/projects";
@@ -142,15 +142,22 @@ export default function ProjectCard({
 
         {/* Links */}
         <div className="flex gap-5 pt-2">
-          <a
-            href={project.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-underline inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-accent"
-          >
-            <GitHubIcon className="h-4 w-4" />
-            Code
-          </a>
+          {project.githubUrl ? (
+            <a
+              href={project.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link-underline inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-accent"
+            >
+              <GitHubIcon className="h-4 w-4" />
+              Code
+            </a>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground/70">
+              <Lock className="h-3.5 w-3.5" aria-hidden="true" />
+              Private repo
+            </span>
+          )}
           {project.liveDemoUrl && (
             <a
               href={project.liveDemoUrl}
