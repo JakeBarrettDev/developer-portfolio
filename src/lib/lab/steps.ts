@@ -1,10 +1,11 @@
 import { locatorCode, partCode, quote, type Suggestion, type Tone } from "./locator";
 
-export type Assertion = "toBeVisible" | "toHaveText" | "toHaveValue" | "toBeChecked";
+export type Assertion = "toBeVisible" | "toHaveText" | "toHaveValue" | "toBeChecked" | "toHaveCount";
 
 export type Action =
   | { type: "goto"; url: string }
-  | { type: "click" }
+  /** `popup` numbers clicks that open a new tab, so each gets its own variable. */
+  | { type: "click"; popup?: { index: number; host: string } }
   | { type: "fill"; value: string; secret?: boolean }
   | { type: "check" }
   | { type: "uncheck" }
@@ -41,6 +42,8 @@ const DOCS = {
   auth: "https://playwright.dev/docs/auth",
   baseURL: "https://playwright.dev/docs/test-webserver#adding-a-baseurl",
   input: "https://playwright.dev/docs/input",
+  pages: "https://playwright.dev/docs/pages#handling-popups",
+  mouse: "https://playwright.dev/docs/input#mouse-click",
 };
 
 // ── Codegen ──
@@ -62,7 +65,8 @@ function actionCall(action: Action): string {
     case "press":
       return `.press(${quote(action.key)})`;
     case "expect":
-      return action.value === undefined ? `.${action.assertion}()` : `.${action.assertion}(${quote(action.value)})`;
+      if (action.value === undefined) return `.${action.assertion}()`;
+      return action.assertion === "toHaveCount" ? `.toHaveCount(${action.value})` : `.${action.assertion}(${quote(action.value)})`;
     case "goto":
       return "";
   }
@@ -85,8 +89,20 @@ export function stepCode(step: Step): string {
   }
 
   const line = `await ${chain}${call};`;
-  if (line.length <= MAX_LINE) return line;
-  return ["await page", ...step.locator.parts.map((p) => `  ${partCode(p)}`), `  ${call};`].join("\n");
+  const actionLines = line.length <= MAX_LINE ? line : ["await page", ...step.locator.parts.map((p) => `  ${partCode(p)}`), `  ${call};`].join("\n");
+
+  if (action.type === "click" && action.popup) {
+    // Listen before clicking, or the popup event can fire before anyone's waiting.
+    const name = action.popup.index === 1 ? "popup" : `popup${action.popup.index}`;
+    const host = action.popup.host.replace(/^www\./, "").replace(/\./g, "\\.");
+    return [
+      `const ${name}Promise = page.waitForEvent('popup');`,
+      actionLines,
+      `const ${name} = await ${name}Promise;`,
+      `await expect(${name}).toHaveURL(/${host}/);`,
+    ].join("\n");
+  }
+  return actionLines;
 }
 
 function testTitle(name: string) {
@@ -174,6 +190,8 @@ function locatorNote(s: Suggestion): Note | null {
         title: "Scoping instead of nth()",
         body: `${d.count ?? "Several"} elements match on their own${
           d.outside ? `, including ${d.outside === 1 ? "one" : d.outside} the app never rendered: Next.js adds a hidden route announcer to every page` : ""
+        }${
+          d.hidden ? `, including ${d.hidden === 1 ? "one" : d.hidden} hidden from view. getByRole skips hidden elements, but text, alt, label, test id and CSS locators still count them` : ""
         }. Instead of .nth(), which breaks when the order changes, the locator first narrows to the ${d.scopeRole}${d.hasText ? ` containing '${d.hasText}'` : ""}.`,
         docs: DOCS.filter,
       };
@@ -209,6 +227,13 @@ function actionNote(action: Action): Note {
         docs: DOCS.baseURL,
       };
     case "click":
+      if (action.popup) {
+        return {
+          title: "Catching the new tab",
+          body: "This link opens a new tab. The test starts waiting for the popup before clicking, because the event can fire before a listener set up afterwards. The popup is a full Page, so the test can assert on it and close it.",
+          docs: DOCS.pages,
+        };
+      }
       return {
         title: "No manual waits",
         body: "click() waits for the element to be attached, visible, stable, enabled and not covered before it acts. No waitForTimeout or waitForSelector needed.",
@@ -262,6 +287,11 @@ function actionNote(action: Action): Note {
           body: "Checks what the field ended up holding, not what was typed, which catches input masks and controlled-input bugs.",
           docs: DOCS.assertions,
         },
+        toHaveCount: {
+          title: "toHaveCount()",
+          body: "Retries until the number of matches is right, so it waits out async rendering. Checking expect(await locator.count()).toBe(3) reads the count once and flakes.",
+          docs: DOCS.assertions,
+        },
         toBeChecked: {
           title: "toBeChecked()",
           body: "Checks the real checked state, which also works for custom checkboxes built with role=\"checkbox\" and aria-checked.",
@@ -274,7 +304,7 @@ function actionNote(action: Action): Note {
 const HINTS: Record<string, Note> = {
   "async-list": {
     title: "Async content",
-    body: "These products load after a delay. The locator retries until they render, so the test never needs to know how slow the API was.",
+    body: "The stack loads after a delay. The locator retries until the button is ready, so the test never needs to know how slow the API was.",
     docs: DOCS.actionability,
   },
   transient: {
@@ -284,8 +314,18 @@ const HINTS: Record<string, Note> = {
   },
   disables: {
     title: "Busy state",
-    body: "This button disables itself while the order submits. The next step's locator waits for the confirmation screen, so no sleep is needed.",
+    body: "Log in disables itself while signing in. The next step's locator waits for the Discover screen to render, so no sleep is needed.",
     docs: DOCS.actionability,
+  },
+  swipe: {
+    title: "You swiped; I recorded the button",
+    body: "Drag gestures are among the flakiest things to automate. I'd cover the swipe once, in a dedicated test using page.mouse, and use the accessible button everywhere else.",
+    docs: DOCS.mouse,
+  },
+  "missing-alt": {
+    title: "Found the bug: no alt text",
+    body: "This painting has no alt attribute, so screen readers skip it and getByAltText can't find it. That's a bug to file against the app, not something to quietly work around in the test.",
+    docs: DOCS.locators,
   },
 };
 

@@ -115,7 +115,7 @@ export function getAccessibleName(el: Element): string {
   return normalize(el.getAttribute("title") || el.getAttribute("placeholder"));
 }
 
-/** Playwright's role/text queries skip hidden elements by default. */
+/** Whether getByRole can see the element: not aria-hidden, hidden, or display:none. */
 export function isVisible(el: Element): boolean {
   if (el.closest("[hidden], [aria-hidden='true']")) return false;
   if (typeof (el as HTMLElement).checkVisibility === "function") {

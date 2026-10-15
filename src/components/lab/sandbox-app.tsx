@@ -1,41 +1,46 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Check, ShoppingBag, X } from "lucide-react";
+import { ExternalLink, Heart, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ARTWORKS, LOGIN_BACKDROP, type Artwork } from "./swesso-art";
 
 /**
- * Raccoon Supply Co. — a tiny store built to be tested. Each screen hides a
- * classic locator or timing trap (see `data-lab-hint` and the comments).
+ * Mini Swesso: a small slice of my art-matching app, built to be tested.
+ * Each screen hides a classic locator or timing trap (see `data-lab-hint`
+ * and the "Trap:" comments).
  */
 
-const PRODUCTS = [
-  { id: "hoodie", name: "Trash Panda Hoodie", category: "Apparel", price: 48 },
-  { id: "beanie", name: "Bandit Mask Beanie", category: "Apparel", price: 24 },
-  { id: "mug", name: "Midnight Snack Mug", category: "Kitchen", price: 18 },
-];
-
 const LOAD_DELAY = 1200;
-const SUBMIT_DELAY = 900;
+const LOGIN_DELAY = 700;
 const TOAST_DURATION = 5000;
+const SWIPE_THRESHOLD = 90;
 
-type Screen = "login" | "shop" | "confirmed";
+type Screen = "login" | "discover" | "matches";
+type Decision = "love" | "pass";
 
-const money = (n: number) => `$${n.toFixed(2)}`;
-
+// Swesso's own palette, independent of the portfolio's theme.
 const field =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-accent/60";
+  "w-full rounded-lg border border-[#e2d8c8] bg-white px-3 py-2 text-sm text-[#2b2430] outline-none transition-colors placeholder:text-[#a2979a] focus:border-[#5b6bc4]";
 const primary =
-  "rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
+  "rounded-full bg-[#2b2430] px-5 py-2 text-sm font-semibold text-[#fffcf6] transition-colors hover:bg-[#4a3f50] disabled:cursor-not-allowed disabled:opacity-60";
 const secondary =
-  "rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-accent/40 hover:bg-accent-light";
+  "rounded-full border border-[#d9cfbf] px-5 py-2 text-sm font-medium text-[#2b2430] transition-colors hover:border-[#5b6bc4] hover:text-[#5b6bc4]";
+const wordmark = "font-[Georgia,'Times_New_Roman',serif] italic tracking-tight";
+
+function Painting({ art, className, ...rest }: { art: Artwork; className?: string; "data-lab-hint"?: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- pre-optimized WebP; skipping Image Optimization keeps this at zero transformations
+    <img src={art.image} alt={art.alt} draggable={false} className={className} {...rest} />
+  );
+}
 
 export default function SandboxApp({ className }: { className?: string }) {
   const [screen, setScreen] = useState<Screen>("login");
   const [user, setUser] = useState("");
-  const [cart, setCart] = useState<Record<string, number>>({});
+  const [deckIndex, setDeckIndex] = useState(0);
+  const [matches, setMatches] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
-  const [orderCount, setOrderCount] = useState(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const showToast = (message: string) => {
@@ -46,36 +51,47 @@ export default function SandboxApp({ className }: { className?: string }) {
 
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
+  const decide = (decision: Decision) => {
+    const art = ARTWORKS[deckIndex];
+    if (!art) return;
+    if (decision === "love") {
+      setMatches((m) => [art.id, ...m]);
+      showToast("It's a match! Saved to your collection.");
+    }
+    setDeckIndex((i) => i + 1);
+  };
+
+  const logOut = () => {
+    setMatches([]);
+    setDeckIndex(0);
+    setScreen("login");
+  };
+
   return (
-    <div id="sandbox" className={cn("relative flex min-h-[30rem] flex-col bg-surface text-foreground", className)}>
-      {screen === "login" && (
+    <div
+      id="sandbox"
+      className={cn("relative flex min-h-[36rem] flex-col overflow-hidden bg-[#f5efe4] text-[#2b2430]", className)}
+    >
+      {screen === "login" ? (
         <LoginScreen
-          onSignIn={(email) => {
-            setUser(email.split("@")[0]);
-            setScreen("shop");
-          }}
-          onGitHub={() => showToast("GitHub sign-in is turned off in the sandbox.")}
-        />
-      )}
-      {screen === "shop" && (
-        <ShopScreen
-          user={user}
-          cart={cart}
-          setCart={setCart}
-          onSignOut={() => {
-            setCart({});
-            setScreen("login");
-          }}
-          onOrderPlaced={() => {
-            setCart({});
-            setOrderCount((n) => n + 1);
-            setScreen("confirmed");
-            showToast("Order placed");
+          onLogIn={(name) => {
+            setUser(name);
+            setScreen("discover");
           }}
         />
-      )}
-      {screen === "confirmed" && (
-        <ConfirmedScreen orderNumber={`#RS-${1041 + orderCount}`} onContinue={() => setScreen("shop")} />
+      ) : (
+        <>
+          <Header screen={screen} matchCount={matches.length} onNavigate={setScreen} onLogOut={logOut} />
+          {screen === "discover" ? (
+            <DiscoverScreen user={user} deckIndex={deckIndex} onDecide={decide} onSeeMatches={() => setScreen("matches")} />
+          ) : (
+            <MatchesScreen
+              matches={matches}
+              onRemove={(id) => setMatches((m) => m.filter((x) => x !== id))}
+              onDiscover={() => setScreen("discover")}
+            />
+          )}
+        </>
       )}
 
       {/* Trap: transient UI. It's only on screen for a few seconds. */}
@@ -83,9 +99,9 @@ export default function SandboxApp({ className }: { className?: string }) {
         <div
           role="status"
           data-lab-hint="transient"
-          className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-border bg-background px-4 py-2 text-sm shadow-lg"
+          className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-[#2b2430] px-4 py-2 text-sm text-[#fffcf6] shadow-lg"
         >
-          <Check className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+          <Heart className="h-4 w-4 fill-[#e58fa5] text-[#e58fa5]" aria-hidden="true" />
           {toast}
         </div>
       )}
@@ -93,328 +109,372 @@ export default function SandboxApp({ className }: { className?: string }) {
   );
 }
 
-// ── Login ──
+// ── Log in ──
 
-function LoginScreen({ onSignIn, onGitHub }: { onSignIn: (email: string) => void; onGitHub: () => void }) {
+function LoginScreen({ onLogIn }: { onLogIn: (name: string) => void }) {
   const id = useId();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   return (
-    <div className="flex flex-1 items-center justify-center p-6">
-      <form
-        noValidate
-        aria-labelledby={`${id}-heading`}
-        className="w-full max-w-xs space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!email.includes("@") || !password) return setError(true);
-          onSignIn(email);
-        }}
-      >
-        <div className="text-center">
-          <ShoppingBag className="mx-auto h-7 w-7 text-accent" aria-hidden="true" />
-          <h2 id={`${id}-heading`} className="mt-2 font-display text-lg font-semibold">
-            Welcome back
+    <div className="relative flex flex-1 flex-col items-center justify-center p-6">
+      {/* Decorative backdrop: alt="" keeps it out of the accessibility tree. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- pre-optimized WebP, see Painting */}
+      <img
+        src={LOGIN_BACKDROP.image}
+        alt=""
+        draggable={false}
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-55"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#f5efe4]/40 via-[#f5efe4]/70 to-[#f5efe4]/95" />
+
+      <div className="relative w-full max-w-sm text-center">
+        <p className={cn(wordmark, "text-5xl text-[#2b2430] drop-shadow-sm")}>Swesso</p>
+        <p className="mt-2 text-sm text-[#4a3f50]">Swipe through museum collections and discover your artistic matches.</p>
+
+        <form
+          noValidate
+          aria-labelledby={`${id}-heading`}
+          className="mt-6 space-y-3 rounded-2xl border border-[#e2d8c8] bg-[#fffcf6]/95 p-5 text-left shadow-xl shadow-[#2b2430]/10 backdrop-blur"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!email.includes("@") || !password) return setError(true);
+            setError(false);
+            setBusy(true);
+            timer.current = setTimeout(() => onLogIn(email.split("@")[0]), LOGIN_DELAY);
+          }}
+        >
+          <h2 id={`${id}-heading`} className="text-base font-semibold">
+            Log in
           </h2>
-          <p className="text-xs text-muted-foreground">Raccoon Supply Co.</p>
-        </div>
+          <div className="space-y-1">
+            <label htmlFor={`${id}-email`} className="text-xs font-medium text-[#4a3f50]">
+              Email
+            </label>
+            <input id={`${id}-email`} type="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} className={field} />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor={`${id}-password`} className="text-xs font-medium text-[#4a3f50]">
+              Password
+            </label>
+            <input
+              id={`${id}-password`}
+              type="password"
+              autoComplete="off"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={field}
+            />
+          </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor={`${id}-email`} className="text-xs font-medium">
-            Email
-          </label>
-          <input
-            id={`${id}-email`}
-            type="email"
-            autoComplete="off"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={field}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label htmlFor={`${id}-password`} className="text-xs font-medium">
-            Password
-          </label>
-          <input
-            id={`${id}-password`}
-            type="password"
-            autoComplete="off"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={field}
-          />
-        </div>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          <input type="checkbox" className="accent-[var(--accent)]" />
-          Remember me
-        </label>
+          {error && (
+            <p role="alert" className="text-xs font-medium text-[#b23a48]">
+              Enter a valid email and password.
+            </p>
+          )}
 
-        {error && (
-          <p role="alert" className="text-xs font-medium text-accent-hover">
-            Enter a valid email and password.
-          </p>
-        )}
+          {/* Trap: "Log in" is a substring of "Log in as guest" (and the heading says it too). */}
+          <button type="submit" data-lab-hint="disables" disabled={busy} className={cn(primary, "w-full")}>
+            {busy ? "Logging in…" : "Log in"}
+          </button>
+          <button type="button" onClick={() => onLogIn("guest")} className={cn(secondary, "w-full")}>
+            Log in as guest
+          </button>
+        </form>
+      </div>
 
-        {/* Trap: "Sign in" is a substring of "Sign in with GitHub". */}
-        <button type="submit" className={cn(primary, "w-full")}>
-          Sign in
-        </button>
-        <button type="button" onClick={onGitHub} className={cn(secondary, "w-full")}>
-          Sign in with GitHub
-        </button>
-      </form>
+      <p className="absolute bottom-3 left-0 right-0 text-center text-[11px] text-[#4a3f50]">
+        {LOGIN_BACKDROP.title} · {LOGIN_BACKDROP.artist} · {LOGIN_BACKDROP.date}
+      </p>
     </div>
   );
 }
 
-// ── Shop ──
+// ── Header ──
 
-function ShopScreen({
+function Header({
+  screen,
+  matchCount,
+  onNavigate,
+  onLogOut,
+}: {
+  screen: Screen;
+  matchCount: number;
+  onNavigate: (screen: Screen) => void;
+  onLogOut: () => void;
+}) {
+  const tab = (target: Screen) =>
+    cn(
+      "whitespace-nowrap rounded-full px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors sm:px-3 sm:text-xs sm:tracking-wider",
+      screen === target ? "bg-[#2b2430] text-[#fffcf6]" : "text-[#4a3f50] hover:text-[#5b6bc4]",
+    );
+  return (
+    <header className="flex items-center gap-1 border-b border-[#e2d8c8] bg-[#fffcf6] px-3 py-2.5 sm:gap-2 sm:px-5">
+      <p className={cn(wordmark, "mr-1 text-xl sm:mr-2 sm:text-2xl")}>Swesso</p>
+      <nav aria-label="Swesso" className="flex items-center gap-1">
+        <button type="button" aria-current={screen === "discover" ? "page" : undefined} onClick={() => onNavigate("discover")} className={tab("discover")}>
+          Discover
+        </button>
+        {/* Trap: the accessible name changes with the count. */}
+        <button type="button" aria-current={screen === "matches" ? "page" : undefined} onClick={() => onNavigate("matches")} className={tab("matches")}>
+          Matches ({matchCount})
+        </button>
+      </nav>
+      <button type="button" onClick={onLogOut} className="ml-auto whitespace-nowrap px-1 py-1.5 text-xs text-[#776c70] sm:px-2 transition-colors hover:text-[#2b2430]">
+        Log out
+      </button>
+    </header>
+  );
+}
+
+// ── Discover ──
+
+function ArtCard({ art, hidden, offset }: { art: Artwork; hidden?: boolean; offset?: number }) {
+  const id = useId();
+  return (
+    <article
+      aria-labelledby={`${id}-title`}
+      // Trap: the cards behind the top one are aria-hidden but still in the DOM.
+      aria-hidden={hidden || undefined}
+      inert={hidden || undefined}
+      className="absolute inset-0 flex flex-col overflow-hidden rounded-2xl border border-[#e2d8c8] bg-[#fffcf6] shadow-xl shadow-[#2b2430]/10"
+      style={offset ? { transform: `translateY(${offset * 10}px) scale(${1 - offset * 0.04})`, zIndex: 10 - offset } : undefined}
+    >
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-[#231d26] p-3">
+        <Painting art={art} className="max-h-full max-w-full object-contain" />
+      </div>
+      <div className="px-4 py-3">
+        <h3 id={`${id}-title`} className={cn(wordmark, "text-lg leading-snug")}>
+          {art.title}
+        </h3>
+        <p className="text-sm text-[#4a3f50]">{art.artist}</p>
+        <p className="text-xs text-[#776c70]">
+          {art.date} · {art.medium}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function DiscoverScreen({
   user,
-  cart,
-  setCart,
-  onSignOut,
-  onOrderPlaced,
+  deckIndex,
+  onDecide,
+  onSeeMatches,
 }: {
   user: string;
-  cart: Record<string, number>;
-  setCart: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-  onSignOut: () => void;
-  onOrderPlaced: () => void;
+  deckIndex: number;
+  onDecide: (decision: Decision) => void;
+  onSeeMatches: () => void;
 }) {
-  const id = useId();
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
-  const [cartOpen, setCartOpen] = useState(false);
+  const [drag, setDrag] = useState<{ startX: number; dx: number } | null>(null);
+  const loveRef = useRef<HTMLButtonElement>(null);
+  const passRef = useRef<HTMLButtonElement>(null);
 
-  // Trap: async content. Products "arrive from the API" after a delay.
+  // Trap: async content. The stack "arrives from the API" after a delay.
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), LOAD_DELAY);
     return () => clearTimeout(timer);
   }, []);
 
-  const count = Object.values(cart).reduce((a, b) => a + b, 0);
-  const visible = PRODUCTS.filter(
-    (p) =>
-      (category === "All" || p.category === category) && p.name.toLowerCase().includes(query.trim().toLowerCase()),
-  );
+  /**
+   * Swipes and arrow keys press the real button, tagged so the Lab can explain
+   * that it recorded the accessible button rather than the gesture.
+   */
+  const pressButton = (decision: Decision) => {
+    const button = (decision === "love" ? loveRef : passRef).current;
+    if (!button) return;
+    button.dataset.labHint = "swipe";
+    button.click();
+    button.dataset.labHint = "async-list";
+  };
+
+  const stack = ARTWORKS.slice(deckIndex, deckIndex + 3);
+  const [top, ...behind] = stack;
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="flex items-center gap-3 border-b border-border px-5 py-3">
-        <h2 className="font-display text-base font-semibold">Raccoon Supply Co.</h2>
-        <span className="hidden text-xs text-muted-foreground sm:inline">Hi, {user}</span>
-        <div className="ml-auto flex items-center gap-2">
-          {/* Trap: the accessible name changes with the count. */}
-          <button type="button" onClick={() => setCartOpen(true)} className={cn(secondary, "whitespace-nowrap px-3 py-1.5")}>
-            Cart ({count})
-          </button>
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="whitespace-nowrap px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Sign out
+    <div className="flex flex-1 flex-col items-center px-4 py-5">
+      <p className="text-sm text-[#776c70]">
+        {user === "guest" ? "Browsing as a guest" : `Welcome back, ${user}`} · {Math.max(ARTWORKS.length - deckIndex, 0)} left in your stack
+      </p>
+
+      {loading ? (
+        <div aria-busy="true" className="mt-4 w-full max-w-sm">
+          <div className="h-[24rem] animate-pulse rounded-2xl border border-[#e2d8c8] bg-[#ece4d6]" />
+          <p className="mt-3 text-center text-xs text-[#776c70]">Curating your stack…</p>
+        </div>
+      ) : top ? (
+        <>
+          <div className="relative mt-4 h-[24rem] w-full max-w-sm">
+            {behind.map((art, i) => (
+              <ArtCard key={art.id} art={art} hidden offset={i + 1} />
+            ))}
+            <div
+              key={top.id}
+              role="group"
+              tabIndex={0}
+              aria-label="Current artwork. Use the left and right arrow keys to pass or love it."
+              className="absolute inset-0 z-10 cursor-grab touch-none rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[#5b6bc4] active:cursor-grabbing"
+              style={drag ? { transform: `translateX(${drag.dx}px) rotate(${drag.dx / 18}deg)` } : { transition: "transform 200ms ease-out" }}
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setDrag({ startX: e.clientX, dx: 0 });
+              }}
+              onPointerMove={(e) => drag && setDrag({ ...drag, dx: e.clientX - drag.startX })}
+              onPointerUp={() => {
+                if (drag && Math.abs(drag.dx) > SWIPE_THRESHOLD) pressButton(drag.dx > 0 ? "love" : "pass");
+                setDrag(null);
+              }}
+              onPointerCancel={() => setDrag(null)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight") pressButton("love");
+                if (e.key === "ArrowLeft") pressButton("pass");
+              }}
+            >
+              <ArtCard art={top} />
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center gap-5">
+            {/* Icon-only buttons: their accessible names come from aria-label. */}
+            <button
+              ref={passRef}
+              type="button"
+              aria-label="Pass"
+              data-lab-hint="async-list"
+              onClick={() => onDecide("pass")}
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#d9cfbf] bg-[#fffcf6] text-[#776c70] shadow-sm transition-colors hover:border-[#2b2430] hover:text-[#2b2430]"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <button
+              ref={loveRef}
+              type="button"
+              aria-label="Love it"
+              data-lab-hint="async-list"
+              onClick={() => onDecide("love")}
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-[#2b2430] text-[#e58fa5] shadow-lg transition-transform hover:scale-105"
+            >
+              <Heart className="h-6 w-6 fill-current" aria-hidden="true" />
+            </button>
+          </div>
+          <p className="mt-2 text-[11px] text-[#a2979a]">Drag the card, or use the arrow keys</p>
+        </>
+      ) : (
+        <div className="mt-16 text-center">
+          <p className={cn(wordmark, "text-2xl")}>That&apos;s the whole collection.</p>
+          <button type="button" onClick={onSeeMatches} className={cn(primary, "mt-4")}>
+            See your matches
           </button>
         </div>
-      </header>
-
-      <div className="flex flex-col gap-3 px-5 pt-4 sm:flex-row">
-        {/* Trap: placeholder, no label. */}
-        <input
-          type="search"
-          placeholder="Search products"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className={cn(field, "sm:flex-1")}
-        />
-        <div className="flex items-center gap-2">
-          <label htmlFor={`${id}-category`} className="text-xs font-medium text-muted-foreground">
-            Category
-          </label>
-          <select
-            id={`${id}-category`}
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className={cn(field, "w-auto py-1.5")}
-          >
-            <option>All</option>
-            <option>Apparel</option>
-            <option>Kitchen</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="flex-1 px-5 py-4">
-        {loading ? (
-          <ul aria-hidden="true" className="grid gap-3 sm:grid-cols-3">
-            {PRODUCTS.map((p) => (
-              <li key={p.id} className="h-32 animate-pulse rounded-xl border border-border bg-muted" />
-            ))}
-          </ul>
-        ) : visible.length ? (
-          // Trap: three identical "Add to cart" buttons.
-          <ul aria-label="Products" className="grid gap-3 sm:grid-cols-3">
-            {visible.map((p) => (
-              <li key={p.id} className="flex flex-col rounded-xl border border-border bg-background p-4">
-                <h3 className="text-sm font-semibold">{p.name}</h3>
-                <p className="text-xs text-muted-foreground">{p.category}</p>
-                <p className="mb-3 mt-2 text-sm font-medium">{money(p.price)}</p>
-                <button
-                  type="button"
-                  data-lab-hint="async-list"
-                  onClick={() => setCart((c) => ({ ...c, [p.id]: (c[p.id] ?? 0) + 1 }))}
-                  className={cn(primary, "mt-auto px-3 py-1.5 text-xs")}
-                >
-                  Add to cart
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="py-10 text-center text-sm text-muted-foreground">No products match “{query}”.</p>
-        )}
-      </div>
-
-      {cartOpen && (
-        <CartDialog
-          cart={cart}
-          onRemove={(pid) =>
-            setCart((c) => {
-              const next = { ...c };
-              delete next[pid];
-              return next;
-            })
-          }
-          onClose={() => setCartOpen(false)}
-          onOrderPlaced={onOrderPlaced}
-        />
       )}
     </div>
   );
 }
 
-function CartDialog({
-  cart,
+// ── Matches ──
+
+function MatchesScreen({
+  matches,
   onRemove,
-  onClose,
-  onOrderPlaced,
+  onDiscover,
 }: {
-  cart: Record<string, number>;
+  matches: string[];
   onRemove: (id: string) => void;
-  onClose: () => void;
-  onOrderPlaced: () => void;
+  onDiscover: () => void;
 }) {
   const id = useId();
-  const [placing, setPlacing] = useState(false);
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const submitTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const lines = PRODUCTS.filter((p) => cart[p.id]);
-  const total = lines.reduce((sum, p) => sum + p.price * cart[p.id], 0);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("Recently matched");
 
-  useEffect(() => {
-    closeRef.current?.focus();
-    return () => clearTimeout(submitTimer.current);
-  }, []);
+  const matched = matches.flatMap((m) => ARTWORKS.filter((a) => a.id === m));
+  const q = query.trim().toLowerCase();
+  const visible = matched
+    .filter((a) => `${a.title} ${a.artist}`.toLowerCase().includes(q))
+    .sort((a, b) => (sort === "Artist" ? a.artist.localeCompare(b.artist) : sort === "Year" ? a.year - b.year : 0));
 
   return (
-    <div className="absolute inset-0 z-10 flex justify-end bg-black/40" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={`${id}-title`}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.key === "Escape" && onClose()}
-        className="flex h-full w-full max-w-xs flex-col border-l border-border bg-surface p-5"
-      >
-        <div className="flex items-center justify-between">
-          <h3 id={`${id}-title`} className="font-display text-base font-semibold">
-            Your cart
-          </h3>
-          <button
-            ref={closeRef}
-            type="button"
-            aria-label="Close cart"
-            onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-
-        {lines.length ? (
-          <ul className="mt-4 space-y-3">
-            {lines.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Qty {cart[p.id]} · {money(p.price * cart[p.id])}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onRemove(p.id)}
-                  className="text-xs text-muted-foreground underline-offset-2 hover:text-accent hover:underline"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-6 text-sm text-muted-foreground">Your cart is empty.</p>
-        )}
-
-        <div className="mt-auto space-y-3 border-t border-border pt-4">
-          <p className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Total</span>
-            <span data-testid="cart-total" className="font-semibold">
-              {money(total)}
-            </span>
+    <div className="flex flex-1 flex-col px-4 py-5 sm:px-5">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="mr-auto">
+          <h2 id={`${id}-heading`} className={cn(wordmark, "text-2xl")}>
+            Your matches
+          </h2>
+          <p data-testid="match-count" className="text-xs text-[#776c70]">
+            {matched.length} artwork{matched.length === 1 ? "" : "s"}
           </p>
-          {/* Trap: disabled while submitting. */}
-          <button
-            type="button"
-            data-lab-hint="disables"
-            disabled={!lines.length || placing}
-            onClick={() => {
-              setPlacing(true);
-              submitTimer.current = setTimeout(onOrderPlaced, SUBMIT_DELAY);
-            }}
-            className={cn(primary, "w-full")}
-          >
-            {placing ? "Placing order…" : "Checkout"}
-          </button>
+        </div>
+        {/* Trap: placeholder, no label. */}
+        <input
+          type="search"
+          placeholder="Search your matches"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className={cn(field, "w-full sm:w-52")}
+        />
+        <div className="flex items-center gap-2">
+          <label htmlFor={`${id}-sort`} className="text-xs font-medium text-[#4a3f50]">
+            Sort by
+          </label>
+          <select id={`${id}-sort`} value={sort} onChange={(e) => setSort(e.target.value)} className={cn(field, "w-auto py-1.5")}>
+            <option>Recently matched</option>
+            <option>Artist</option>
+            <option>Year</option>
+          </select>
         </div>
       </div>
-    </div>
-  );
-}
 
-// ── Confirmation ──
+      {!matched.length ? (
+        <div className="mt-14 text-center">
+          <p className="text-sm text-[#776c70]">No matches yet. Head back and love something.</p>
+          <button type="button" onClick={onDiscover} className={cn(primary, "mt-4")}>
+            Start discovering
+          </button>
+        </div>
+      ) : !visible.length ? (
+        <p className="mt-14 text-center text-sm text-[#776c70]">Nothing matches “{query}”.</p>
+      ) : (
+        // Trap: every card has its own "Remove" button and "View at The Met" link.
+        <ul aria-labelledby={`${id}-heading`} className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {visible.map((art) => (
+            <li key={art.id} className="flex flex-col overflow-hidden rounded-xl border border-[#e2d8c8] bg-[#fffcf6]">
+              <div className="flex h-40 items-center justify-center bg-[#231d26] p-2">
+                <Painting art={art} className="max-h-full max-w-full object-contain" data-lab-hint={art.alt ? undefined : "missing-alt"} />
+              </div>
+              <div className="flex flex-1 flex-col px-3 py-2.5">
+                <h3 className="text-sm font-semibold leading-snug">{art.title}</h3>
+                <p className="text-xs text-[#4a3f50]">{art.artist}</p>
+                <p className="text-xs text-[#776c70]">{art.date}</p>
+                <div className="mt-auto flex items-center justify-between pt-2.5">
+                  {/* Trap: opens a new tab, so the test needs to catch the popup. */}
+                  <a
+                    href={art.metUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-[#5b6bc4] hover:underline"
+                  >
+                    View at The Met
+                    <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                  </a>
+                  <button type="button" onClick={() => onRemove(art.id)} className="text-xs text-[#776c70] hover:text-[#b23a48]">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
-function ConfirmedScreen({ orderNumber, onContinue }: { orderNumber: string; onContinue: () => void }) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
-        <Check className="h-6 w-6 text-emerald-500" aria-hidden="true" />
-      </div>
-      <h2 className="font-display text-lg font-semibold">Thanks for your order!</h2>
-      <p className="text-sm text-muted-foreground">
-        Order{" "}
-        <strong data-testid="order-number" className="text-foreground">
-          {orderNumber}
-        </strong>{" "}
-        is on its way.
+      <p className="mt-auto pt-6 text-center text-[10px] text-[#a2979a]">
+        Artworks: The Metropolitan Museum of Art, Open Access (public domain)
       </p>
-      <button type="button" onClick={onContinue} className={cn(secondary, "mt-2")}>
-        Continue shopping
-      </button>
     </div>
   );
 }

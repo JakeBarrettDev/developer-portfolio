@@ -65,8 +65,10 @@ export interface Suggestion {
     scopeRole?: string;
     hasText?: string;
     inner?: Strategy;
-    /** How many of the colliding matches live outside the store's own markup. */
+    /** How many of the colliding matches live outside the app's own markup. */
     outside?: number;
+    /** How many of the colliding matches are hidden (still counted by non-role locators). */
+    hidden?: number;
   };
   /** Set when the locator is offered as an option or typed in by a visitor. */
   review?: Review;
@@ -86,8 +88,14 @@ function matches(text: string, m: Matcher): boolean {
   return t.toLowerCase().includes(normalize(m.value).toLowerCase());
 }
 
+/**
+ * Every element in scope. Only getByRole skips hidden elements; text, label,
+ * alt, test id, CSS and XPath all count aria-hidden and display:none matches
+ * too (verified against Playwright 1.64), which is how hidden duplicates
+ * cause surprise strict-mode violations.
+ */
 function descendants(scope: ParentNode): Element[] {
-  return Array.from(scope.querySelectorAll("*")).filter(isVisible);
+  return Array.from(scope.querySelectorAll("*"));
 }
 
 function queryXPath(scope: ParentNode, expr: string): Element[] {
@@ -101,7 +109,7 @@ function queryXPath(scope: ParentNode, expr: string): Element[] {
     const out: Element[] = [];
     for (let i = 0; i < result.snapshotLength; i++) {
       const node = result.snapshotItem(i);
-      if (node instanceof Element && node !== scope && scope.contains(node) && isVisible(node)) out.push(node);
+      if (node instanceof Element && node !== scope && scope.contains(node)) out.push(node);
     }
     return out;
   } catch {
@@ -113,7 +121,7 @@ function queryPart(scope: ParentNode, part: Exclude<LocatorPart, { by: "filter" 
   switch (part.by) {
     case "role":
       return descendants(scope).filter(
-        (el) => getRole(el) === part.role && (!part.name || matches(getAccessibleName(el), part.name)),
+        (el) => isVisible(el) && getRole(el) === part.role && (!part.name || matches(getAccessibleName(el), part.name)),
       );
     case "label":
       return descendants(scope).filter((el) => getLabelTexts(el).some((t) => matches(t, part.text)));
@@ -132,7 +140,7 @@ function queryPart(scope: ParentNode, part: Exclude<LocatorPart, { by: "filter" 
       );
     case "css":
       try {
-        return Array.from(scope.querySelectorAll(part.selector)).filter(isVisible);
+        return Array.from(scope.querySelectorAll(part.selector));
       } catch {
         return [];
       }
@@ -162,10 +170,10 @@ export function resolve(parts: LocatorPart[], roots: ParentNode | ParentNode[]):
 
 /**
  * Everything an exported test can see on /lab/sandbox. That page has no site
- * chrome, so it's the store plus whatever the framework injects at document
+ * chrome, so it's the app plus whatever the framework injects at document
  * level: Next.js's route announcer, an open shadow root with role="alert"
  * (Playwright's locators pierce open shadow roots). Checking uniqueness
- * against the store alone produced locators that hit strict-mode violations.
+ * against the app alone produced locators that hit strict-mode violations.
  */
 export function pageRoots(root: Element): ParentNode[] {
   const injected = Array.from(root.ownerDocument.querySelectorAll("next-route-announcer"))
@@ -268,7 +276,7 @@ function scopeLocators(scope: Element, roots: ParentNode[]): { parts: LocatorPar
   return out.filter((s) => isUnique(s.parts, scope, roots));
 }
 
-/** The store's outermost element, which carries id="sandbox" on every page. */
+/** The app's outermost element, which carries id="sandbox" on every page. */
 export const SANDBOX_ID = "sandbox";
 
 function anchorOf(root: Element): Element {
@@ -282,7 +290,7 @@ function sameTagIndex(node: Element): number | null {
   return sameTag.length > 1 ? sameTag.indexOf(node) + 1 : null;
 }
 
-/** What DevTools' "Copy selector" gives you, anchored to the store's id. */
+/** What DevTools' "Copy selector" gives you, anchored to the app's id. */
 export function cssPath(el: Element, root: Element): string {
   const anchor = anchorOf(root);
   const segments: string[] = [];
@@ -313,7 +321,7 @@ export function classSelector(el: Element): string | null {
 
 /**
  * Picks the most resilient locator that uniquely identifies `el`, where
- * `root` is the store and uniqueness is checked against the whole exported page.
+ * `root` is the sandbox app and uniqueness is checked against the whole exported page.
  */
 export function suggestLocator(el: Element, root: Element, opts: SuggestOptions = {}): Suggestion {
   const roots = pageRoots(root);
@@ -347,6 +355,7 @@ export function suggestLocator(el: Element, root: Element, opts: SuggestOptions 
             detail: {
               count: collisions.length,
               outside: collisions.filter((hit) => !root.contains(hit)).length,
+              hidden: collisions.filter((hit) => root.contains(hit) && !isVisible(hit)).length,
               scopeRole: scopeRole ?? "container",
               hasText: s.hasText,
               inner: c.strategy,

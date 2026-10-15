@@ -86,6 +86,22 @@ function assertOptions(el: Element, root: Element): AssertOption[] {
     const text = normalize(el.textContent);
     if (text && text.length <= 80) add("toHaveText", text, locatorOptions(el, root, { assertText: text }));
   }
+
+  // Anything inside a list can assert on how many items the list has.
+  const list = el.closest("ul, ol, [role='list']");
+  if (list && root.contains(list)) {
+    const listLocator = locatorOptions(list, root).best;
+    const items: Suggestion = { parts: [...listLocator.parts, { by: "role", role: "listitem" }], strategy: listLocator.strategy };
+    const count = resolve(items.parts, pageRoots(root)).length;
+    options.push({
+      label: `toHaveCount(${count})`,
+      action: { type: "expect", assertion: "toHaveCount", value: String(count) },
+      locator: items,
+      options: [],
+      target: list,
+      hint,
+    });
+  }
   return options;
 }
 
@@ -93,7 +109,7 @@ export default function TestLab() {
   const [mode, setMode] = useState<Mode>("record");
   const [steps, setSteps] = useState<Step[]>([GOTO]);
   const [selected, setSelected] = useState<string>(GOTO.id);
-  const [testName, setTestName] = useState("checkout flow");
+  const [testName, setTestName] = useState("find my matches");
   const [sandboxKey, setSandboxKey] = useState(0);
   const [hover, setHover] = useState<{ box: Box; code: string } | null>(null);
   const [highlights, setHighlights] = useState<Box[]>([]);
@@ -104,6 +120,7 @@ export default function TestLab() {
   const rootRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(1);
   const lastFill = useRef<{ el: Element; id: string } | null>(null);
+  const popupCount = useRef(0);
   const skipClickUntil = useRef(0);
   const modeRef = useRef(mode);
 
@@ -181,7 +198,11 @@ export default function TestLab() {
       startTransition(() => setHover(null));
       if (!target || isFormControl(target)) return; // fills, checks and selects are recorded from input/change
       if (e.detail === 0 && performance.now() < skipClickUntil.current) return; // Enter's synthetic submit click
-      record(target, { type: "click" });
+      if (target instanceof HTMLAnchorElement && target.target === "_blank") {
+        record(target, { type: "click", popup: { index: ++popupCount.current, host: new URL(target.href).hostname } });
+      } else {
+        record(target, { type: "click" });
+      }
     };
 
     const onMouseDown = (e: MouseEvent) => {
@@ -254,6 +275,7 @@ export default function TestLab() {
     setMenu(null);
     setHover(null);
     lastFill.current = null;
+    popupCount.current = 0;
   };
 
   const removeStep = (id: string) => {
@@ -312,9 +334,9 @@ export default function TestLab() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground">
-          {mode === "record" && "Use the store. Every action becomes a line of the test."}
+          {mode === "record" && "Use the app. Every action becomes a line of the test."}
           {mode === "assert" && "Click any element to add an expectation."}
-          {mode === "paused" && "Recording paused. The store works normally."}
+          {mode === "paused" && "Recording paused. The app works normally."}
         </p>
         <button
           type="button"
@@ -326,7 +348,7 @@ export default function TestLab() {
         </button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         {/* ── Browser frame ── */}
         <div className="overflow-hidden rounded-2xl border border-border bg-muted shadow-xl shadow-black/10">
           <div className="flex items-center gap-3 border-b border-border px-4 py-2.5">
@@ -419,7 +441,7 @@ export default function TestLab() {
         {/* ── Generated code ── */}
         <div className="flex min-h-[30rem] flex-col overflow-hidden rounded-2xl border border-[#2e2e32] bg-[#141416] text-[#e8e4df] shadow-xl shadow-black/10">
           <div className="flex items-center gap-3 border-b border-[#2e2e32] px-4 py-2.5">
-            <span className="font-mono text-xs text-[#9a9590]">checkout.spec.ts</span>
+            <span className="font-mono text-xs text-[#9a9590]">swesso.spec.ts</span>
             <span className="rounded-full bg-[#a01a2a]/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#f08a98]">
               {steps.length - 1} step{steps.length === 2 ? "" : "s"}
             </span>
@@ -500,7 +522,7 @@ export default function TestLab() {
                   {isSelected && (
                     <>
                       <Notes step={step} />
-                      {step.options && (
+                      {step.options && step.options.length > 0 && (
                         <LocatorPicker step={step} getRoot={() => rootRef.current} onPick={(l) => pickLocator(step.id, l)} />
                       )}
                     </>
@@ -511,7 +533,7 @@ export default function TestLab() {
 
             {steps.length === 1 && (
               <div className="px-4">
-                <CodeLine code="  // Sign in with any email and password to start." />
+                <CodeLine code="  // Log in (any email and password) or continue as a guest." />
               </div>
             )}
             <div className="px-4">{"});"}</div>

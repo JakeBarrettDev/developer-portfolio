@@ -5,7 +5,7 @@ import TestLab from "@/components/lab/test-lab";
 
 export const metadata: Metadata = {
   title: "Playwright Lab",
-  description: "Record a Playwright test by using a tiny store, with every line explained.",
+  description: "Record a Playwright test by using a mini version of Swesso, with every line explained and every locator reviewed.",
 };
 
 const principles = [
@@ -15,12 +15,14 @@ const principles = [
 ];
 
 const challenges = [
-  { title: "Sign in", body: "Watch what happens to the button's locator when another button's name contains 'Sign in'." },
-  { title: "Add the mug", body: "Three buttons share the name 'Add to cart'. See how the locator tells them apart without nth()." },
-  { title: "Search", body: "The search box has no label. The locator still works, but the note flags it." },
-  { title: "Open the cart", body: "Its name contains a live count, so the locator switches to a regex." },
-  { title: "Assert the total", body: "In Assert mode, click the cart total and pick toHaveText to see why it doesn't locate by its own text." },
-  { title: "Catch the toast", body: "Check out, then quickly assert on the 'Order placed' toast before it disappears." },
+  { title: "Log in", body: "'Log in' is also part of 'Log in as guest' and the form's heading. Watch the button's locator handle it." },
+  { title: "Peek behind the stack", body: "Hover the artist on the top card. The cards behind it are hidden but still in the DOM, and only some locators know that." },
+  { title: "Swipe", body: "Drag a card instead of pressing the heart, and see what gets recorded and why." },
+  { title: "Open your matches", body: "'Matches (3)' changes as you go, so the locator switches to a regex." },
+  { title: "Choose a worse locator", body: "Click a 'Remove' line and pick nth() or the XPath. Then sort the list by artist and think about which one survives." },
+  { title: "Count the collection", body: "In Assert mode, click a card in your matches and pick toHaveCount." },
+  { title: "Visit The Met", body: "'View at The Met' opens a new tab. Record it to see how a test catches a popup." },
+  { title: "Find the bug", body: "One painting in your matches has no alt text. Hover the images until you find it." },
 ];
 
 export default function LabPage() {
@@ -50,8 +52,10 @@ export default function LabPage() {
             className="animate-fade-up mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground"
             style={{ animationDelay: "200ms" }}
           >
-            I write Playwright suites for a living at VML. This lab records your clicks in a small store and writes
-            the test I would write, with notes on the decisions a code generator usually makes silently.
+            I write Playwright suites for a living at VML. This lab records your clicks in a mini version of{" "}
+            <span className="font-medium text-foreground">Swesso</span>, my art-matching app, and writes the test I
+            would write. Every line comes with the reasoning a code generator usually keeps to itself, and you can
+            swap in worse locators to see how I&apos;d review them.
           </p>
 
           <div className="animate-fade-up mt-8 grid gap-3 sm:grid-cols-3" style={{ animationDelay: "300ms" }}>
@@ -65,19 +69,22 @@ export default function LabPage() {
         </div>
       </HeroSpotlight>
 
-      {/* ── The lab ── */}
-      <section className="animate-fade-up" style={{ animationDelay: "400ms" }}>
-        <TestLab />
+      {/* ── The lab: breaks out of the site's column to use the full width ── */}
+      <section className="animate-fade-up mx-[calc(50%-50vw)] px-4 sm:px-6" style={{ animationDelay: "400ms" }}>
+        <div className="mx-auto max-w-[1280px]">
+          <TestLab />
+        </div>
       </section>
 
       {/* ── Things to try ── */}
-      <section>
+      <section className="mx-[calc(50%-50vw)] px-4 sm:px-6">
+        <div className="mx-auto max-w-[1280px]">
         <Reveal from="left" className="flex items-center gap-4">
           <h2 className="whitespace-nowrap font-display text-2xl font-bold">Things to try</h2>
           <div className="hidden h-px flex-1 bg-gradient-to-r from-border to-transparent sm:block" />
         </Reveal>
-        <p className="mt-2 text-sm text-muted-foreground">Each screen of the store hides a common locator or timing trap.</p>
-        <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <p className="mt-2 text-sm text-muted-foreground">Each screen hides a common locator or timing trap.</p>
+        <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {challenges.map((c, i) => (
             <li key={c.title}>
               <Reveal delay={i * 60} className="h-full rounded-xl border border-border bg-surface p-4">
@@ -90,6 +97,10 @@ export default function LabPage() {
             </li>
           ))}
         </ol>
+        <p className="mt-6 text-xs text-muted-foreground">
+          Paintings courtesy of The Metropolitan Museum of Art&apos;s Open Access program (public domain).
+        </p>
+        </div>
       </section>
     </div>
   );

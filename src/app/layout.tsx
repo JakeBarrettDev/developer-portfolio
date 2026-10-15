@@ -41,7 +41,7 @@ export default function RootLayout({
       lang="en"
       className={`${sora.variable} ${dmSans.variable} h-full antialiased`}
     >
-      <body className="grain flex min-h-full flex-col font-body">
+      <body className="grain flex min-h-full flex-col overflow-x-clip font-body">
         {children}
         <Analytics />
       </body>
