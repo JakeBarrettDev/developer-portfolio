@@ -39,7 +39,7 @@ export const projects: Project[] = [
       brief: "Plan an October horror marathon with friends, without the nightly debate over what to watch.",
       approach:
         "A 90s video store you open with friends: rent tapes onto a shared shelf, spread pumpkin votes across your favorites, and let a server-side wheel spin pick each night's feature. The retro look is plain CSS and inline SVG, and TMDB supplies the movies.",
-      outcome: "Live at tombstone-video.vercel.app.",
+      outcome: "Live at tombstone.video.",
     },
     accent: "#f26b1d",
     featured: true,
@@ -47,7 +47,7 @@ export const projects: Project[] = [
     description:
       "A 90s video store for planning an October horror marathon with friends. Open a store, rent tapes onto a shared shelf, spread your pumpkin votes, and let a server-side wheel spin pick each movie night's feature. Retro look done entirely in plain CSS and inline SVG.",
     techStack: ["Next.js", "TypeScript", "Drizzle ORM", "Neon Postgres", "TMDB API", "Vercel"],
-    liveDemoUrl: "https://tombstone-video.vercel.app",
+    liveDemoUrl: "https://tombstone.video",
     thumbnail: "/projects/tombstone-video-thumb.jpg",
     status: "live",
   },
@@ -67,7 +67,7 @@ export const projects: Project[] = [
     description:
       "A map-first worldbuilding and campaign manager for Dungeon Masters. Lore, NPCs, quests, and faction clocks all live on the map, and Spark, an optional AI collaborator, helps prep sessions and catch continuity conflicts. Local-first, with everything stored in the browser.",
     techStack: ["React", "TypeScript", "Leaflet", "Zustand", "Dexie.js", "Claude API"],
-    thumbnail: "/projects/cartomancer-thumb.jpg",
+    thumbnail: "/projects/cartomancer-session.jpg",
     status: "in-progress",
   },
   {
