@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import Image from "next/image";
-import { ExternalLink, ArrowUpRight, Lock } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, ArrowUpRight, ArrowRight, Lock } from "lucide-react";
 import { GitHubIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/data/projects";
@@ -100,7 +101,9 @@ export default function ProjectCard({
             wide ? "text-2xl" : "text-xl"
           )}
         >
-          {project.title}
+          <Link href={`/projects/${project.slug}`} className="hover:underline hover:decoration-1 hover:underline-offset-4">
+            {project.title}
+          </Link>
         </h3>
         <p className="text-sm leading-relaxed text-muted-foreground">
           {project.description}
@@ -119,7 +122,14 @@ export default function ProjectCard({
         </div>
 
         {/* Links */}
-        <div className="flex gap-5 pt-2">
+        <div className="flex flex-wrap gap-x-5 gap-y-2 pt-2">
+          <Link
+            href={`/projects/${project.slug}`}
+            className="link-underline inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-accent"
+          >
+            Case study
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
           {project.githubUrl ? (
             <a
               href={project.githubUrl}

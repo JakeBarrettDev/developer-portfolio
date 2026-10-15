@@ -1,4 +1,4 @@
-/** Editorial content for the homepage: work highlights, client words, case study. */
+/** Editorial content: work highlights and client words. */
 
 export const vmlHighlights = [
   {
@@ -25,6 +25,8 @@ export interface Testimonial {
   role: string;
   /** The live site, when there is one. */
   url?: string;
+  /** The project it's about, for its case-study page. */
+  project: string;
 }
 
 export const testimonials: Testimonial[] = [
@@ -33,19 +35,11 @@ export const testimonials: Testimonial[] = [
     name: "Jeff Conners",
     role: "Artist",
     url: "https://jeffconners.art",
+    project: "jeff-conners",
   },
   {
     quote: "This is going to draw so much new business. It's fast and looks awesome!",
     role: "Owner, Tetrad Build",
+    project: "tetrad-build",
   },
 ];
-
-export const swessoCaseStudy = {
-  url: "https://swesso.com",
-  image: "/projects/swesso-thumb.jpg",
-  brief: "I wanted to understand museums, art, and what my own taste says about me.",
-  approach:
-    "Swesso turns museum collections into a swipe deck, the interaction everyone already knows. Every card teaches you about the piece and the artist, and your likes build a picture of your taste.",
-  outcome: "Live at swesso.com, where people have swiped through more than 10,000 artworks.",
-  stat: { value: "10,000+", label: "artworks swiped" },
-};

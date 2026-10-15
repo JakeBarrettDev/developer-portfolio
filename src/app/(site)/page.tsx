@@ -5,7 +5,7 @@ import Reveal from "@/components/reveal";
 import SectionHead from "@/components/section-head";
 import LabTeaser from "@/components/lab-teaser";
 import { projects, type Project } from "@/data/projects";
-import { swessoCaseStudy, testimonials, vmlHighlights } from "@/data/profile";
+import { testimonials, vmlHighlights } from "@/data/profile";
 import { site } from "@/data/site";
 
 const KIND_LABEL: Record<Project["kind"], string> = {
@@ -20,6 +20,8 @@ const textLink = "link-underline inline-flex items-center gap-1.5 text-sm font-m
 
 export default function Home() {
   const building = projects.find((p) => p.status === "in-progress");
+  const swesso = projects.find((p) => p.slug === "swesso")!;
+  const swessoCase = swesso.caseStudy;
 
   return (
     <div className="space-y-24 sm:space-y-32">
@@ -29,7 +31,7 @@ export default function Home() {
           <span className="text-foreground">Jake Barrett</span>
           <span className="hidden md:inline">QA automation · Web development</span>
           {building && (
-            <Link href="/projects" className="transition-colors hover:text-accent">
+            <Link href={`/projects/${building.slug}`} className="transition-colors hover:text-accent">
               Now building: <span className="text-foreground">{building.title}</span>
             </Link>
           )}
@@ -158,14 +160,14 @@ export default function Home() {
               Swesso: learning art the way we <em className="font-normal italic">already</em> swipe.
             </>
           }
-          action={{ href: swessoCaseStudy.url, label: "Visit swesso.com", external: true }}
+          action={{ href: "/projects/swesso", label: "Read the case study" }}
         />
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <Reveal className="lg:col-span-7">
             <figure>
               <div className="relative aspect-[800/408] overflow-hidden rounded-2xl border border-border">
                 <Image
-                  src={swessoCaseStudy.image}
+                  src={swesso.thumbnail}
                   alt="Swesso's welcome screen: Van Gogh's Irises behind the Swesso wordmark"
                   fill
                   className="object-cover"
@@ -176,14 +178,14 @@ export default function Home() {
             </figure>
           </Reveal>
           <Reveal delay={100} className="lg:col-span-5">
-            <p className="font-display text-6xl font-medium tracking-tight">{swessoCaseStudy.stat.value}</p>
-            <p className="eyebrow mt-2 text-accent">{swessoCaseStudy.stat.label}</p>
+            <p className="font-display text-6xl font-medium tracking-tight">{swessoCase.stat?.value}</p>
+            <p className="eyebrow mt-2 text-accent">{swessoCase.stat?.label}</p>
             <dl className="mt-8 space-y-6">
               {(
                 [
-                  ["Brief", swessoCaseStudy.brief],
-                  ["Approach", swessoCaseStudy.approach],
-                  ["Outcome", swessoCaseStudy.outcome],
+                  ["Brief", swessoCase.brief],
+                  ["Approach", swessoCase.approach],
+                  ["Outcome", swessoCase.outcome],
                 ] as const
               ).map(([term, text]) => (
                 <div key={term} className="grid gap-1 sm:grid-cols-[6rem_1fr] sm:gap-4">
@@ -192,9 +194,14 @@ export default function Home() {
                 </div>
               ))}
             </dl>
-            <Link href="/lab" className={`${textLink} mt-8`}>
-              Try a mini Swesso in the Lab <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            <div className="mt-8 flex flex-wrap gap-6">
+              <a href={swesso.liveDemoUrl} target="_blank" rel="noopener noreferrer" className={textLink}>
+                Visit swesso.com <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+              <Link href="/lab" className={textLink}>
+                Try a mini Swesso in the Lab <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -252,7 +259,9 @@ export default function Home() {
               <tr key={p.slug} className="group border-b border-border">
                 <td className="eyebrow py-5 align-baseline text-accent">{String(i + 1).padStart(2, "0")}</td>
                 <td className="py-5 align-baseline">
-                  <span className="font-display text-xl font-medium sm:text-2xl">{p.title}</span>
+                  <Link href={`/projects/${p.slug}`} className="font-display text-xl font-medium transition-colors hover:text-accent sm:text-2xl">
+                    {p.title}
+                  </Link>
                   <span className="mt-1 block text-sm text-muted-foreground sm:hidden">{KIND_LABEL[p.kind]}</span>
                 </td>
                 <td className="hidden py-5 align-baseline text-sm text-muted-foreground sm:table-cell">{KIND_LABEL[p.kind]}</td>
@@ -286,10 +295,14 @@ export default function Home() {
           </Reveal>
           <Reveal delay={100} className="lg:col-span-8 lg:col-start-5">
             <p className="font-display text-3xl font-normal italic leading-snug sm:text-4xl">
-              &ldquo;I love building things that make people say &lsquo;whoa,&rsquo; and making sure they still work
-              after they ship.&rdquo;
+              &ldquo;Software should carry the intention of the person who made it, not the other way
+              around.&rdquo;
             </p>
             <div className="mt-8 max-w-2xl space-y-5 leading-relaxed text-muted-foreground">
+              <p>
+                I build things that reflect what I care about, and the best of them make culture a little easier to
+                learn: Swesso teaches art history one swipe at a time, and the Lab runs on paintings from the Met.
+              </p>
               <p>
                 By day I&apos;m a QA automation engineer at <span className="text-foreground">VML</span>, building
                 and running the Playwright suites that guard a large brand platform&apos;s releases. Through{" "}
