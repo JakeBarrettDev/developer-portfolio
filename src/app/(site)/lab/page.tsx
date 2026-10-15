@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import HeroSpotlight from "@/components/hero-spotlight";
 import Reveal from "@/components/reveal";
 import TestLab from "@/components/lab/test-lab";
 
@@ -29,16 +28,15 @@ export default function LabPage() {
   return (
     <div className="space-y-12">
       {/* ── Hero ── */}
-      <HeroSpotlight className="relative -mx-6 -mt-16 overflow-hidden px-6 pb-4 pt-20 sm:pt-28">
+      <section className="relative -mx-6 -mt-16 overflow-hidden px-6 pb-4 pt-20 sm:pt-28">
         <div className="hero-backdrop hero-gradient" />
-        <div className="pointer-events-none absolute right-10 top-16 h-28 w-28 animate-float rounded-full border border-accent/10 opacity-50 sm:right-24 sm:h-40 sm:w-40" />
 
-        <div className="relative mx-auto max-w-5xl">
-          <p className="animate-fade-up text-xs font-bold uppercase tracking-[0.3em] text-accent" style={{ animationDelay: "0ms" }}>
+        <div className="relative mx-auto max-w-[1280px]">
+          <p className="animate-fade-up eyebrow text-accent" style={{ animationDelay: "0ms" }}>
             Playwright Lab
           </p>
           <h1
-            className="animate-fade-up mt-4 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl"
+            className="animate-fade-up mt-4 max-w-3xl font-display text-4xl font-medium leading-tight tracking-tight sm:text-5xl"
             style={{ animationDelay: "100ms" }}
           >
             Write a test by{" "}
@@ -67,7 +65,7 @@ export default function LabPage() {
             ))}
           </div>
         </div>
-      </HeroSpotlight>
+      </section>
 
       {/* ── The lab: breaks out of the site's column to use the full width ── */}
       <section className="animate-fade-up mx-[calc(50%-50vw)] px-4 sm:px-6" style={{ animationDelay: "400ms" }}>
@@ -80,7 +78,7 @@ export default function LabPage() {
       <section className="mx-[calc(50%-50vw)] px-4 sm:px-6">
         <div className="mx-auto max-w-[1280px]">
         <Reveal from="left" className="flex items-center gap-4">
-          <h2 className="whitespace-nowrap font-display text-2xl font-bold">Things to try</h2>
+          <h2 className="whitespace-nowrap font-display text-2xl font-medium">Things to try</h2>
           <div className="hidden h-px flex-1 bg-gradient-to-r from-border to-transparent sm:block" />
         </Reveal>
         <p className="mt-2 text-sm text-muted-foreground">Each screen hides a common locator or timing trap.</p>

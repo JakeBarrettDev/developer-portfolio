@@ -14,11 +14,14 @@ export interface Project {
   featured?: boolean;
   /** Hover glow color for this project's card. */
   accent: string;
+  /** Who it was for: a client, my own studio, or myself. */
+  kind: "client" | "studio" | "personal";
 }
 
 export const projects: Project[] = [
   {
     slug: "tombstone-video",
+    kind: "personal",
     accent: "#f26b1d",
     featured: true,
     title: "Tombstone Video",
@@ -31,6 +34,7 @@ export const projects: Project[] = [
   },
   {
     slug: "cartomancer",
+    kind: "personal",
     accent: "#b8893e",
     featured: true,
     title: "Cartomancer",
@@ -42,6 +46,7 @@ export const projects: Project[] = [
   },
   {
     slug: "swesso",
+    kind: "personal",
     accent: "#6d7fd6",
     title: "Swesso",
     description:
@@ -54,6 +59,7 @@ export const projects: Project[] = [
   },
   {
     slug: "jeff-conners",
+    kind: "client",
     accent: "#e3a33b",
     title: "Jeff Conners Art",
     description:
@@ -67,6 +73,7 @@ export const projects: Project[] = [
   },
   {
     slug: "tetrad-build",
+    kind: "client",
     accent: "#c07a5a",
     title: "Tetrad Build",
     description:
@@ -78,6 +85,7 @@ export const projects: Project[] = [
   },
   {
     slug: "maroon-raccoon",
+    kind: "studio",
     accent: "#a01a2a",
     title: "Maroon Raccoon",
     description:

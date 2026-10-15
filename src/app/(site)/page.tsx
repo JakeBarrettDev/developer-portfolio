@@ -1,244 +1,311 @@
-import { ArrowRight, Code2, Music, Dog, Briefcase, FlaskConical } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import HeroSpotlight from "@/components/hero-spotlight";
 import Reveal from "@/components/reveal";
-import ProjectCard from "@/components/project-card";
+import SectionHead from "@/components/section-head";
 import LabTeaser from "@/components/lab-teaser";
-import { projects } from "@/data/projects";
+import { projects, type Project } from "@/data/projects";
+import { swessoCaseStudy, testimonials, vmlHighlights } from "@/data/profile";
+import { site } from "@/data/site";
+
+const KIND_LABEL: Record<Project["kind"], string> = {
+  client: "Client",
+  studio: "My studio",
+  personal: "Personal",
+};
+
+const primaryButton =
+  "group inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-glow";
+const textLink = "link-underline inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-accent";
 
 export default function Home() {
-  const featured = projects.filter((p) => p.featured);
   const building = projects.find((p) => p.status === "in-progress");
 
   return (
-    <div className="space-y-32">
-      {/* ── Hero ── */}
-      <HeroSpotlight className="relative -mx-6 -mt-16 px-6 pb-24 pt-24 sm:pt-32">
-        <div className="hero-backdrop hero-gradient" />
-        {/* Decorative shapes */}
-        <div className="pointer-events-none absolute left-8 top-20 h-32 w-32 animate-float rounded-full border border-accent/10 opacity-40 sm:left-16 sm:h-48 sm:w-48" />
-        <div className="pointer-events-none absolute right-12 top-40 h-20 w-20 animate-float-delayed rounded-full bg-accent/5 opacity-60 sm:right-24 sm:h-28 sm:w-28" />
-        <div className="pointer-events-none absolute bottom-16 left-1/3 h-16 w-16 animate-float-delayed rounded-full border border-accent/8" />
+    <div className="space-y-24 sm:space-y-32">
+      {/* ── Masthead ── */}
+      <section className="relative">
+        <div className="eyebrow animate-fade-up flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-border pb-3 text-muted-foreground">
+          <span className="text-foreground">Jake Barrett</span>
+          <span className="hidden md:inline">QA automation · Web development</span>
+          {building && (
+            <Link href="/projects" className="transition-colors hover:text-accent">
+              Now building: <span className="text-foreground">{building.title}</span>
+            </Link>
+          )}
+        </div>
 
-        <div className="relative mx-auto flex max-w-5xl flex-col items-center gap-10 sm:flex-row sm:items-center sm:gap-16">
-          {/* Photo */}
-          <div
-            className="animate-fade-up relative shrink-0"
-            style={{ animationDelay: "0ms" }}
-          >
-            <div className="animate-pulse-glow relative h-44 w-44 overflow-hidden rounded-2xl border-2 border-accent/20 sm:h-56 sm:w-56 lg:h-64 lg:w-64">
-              <Image
-                src="/jake.jpg"
-                alt="Jake Barrett"
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 640px) 176px, (max-width: 1024px) 224px, 256px"
-              />
-            </div>
-            {/* Decorative corner accent */}
-            <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-br-2xl border-b-2 border-r-2 border-accent/40" />
-            <div className="absolute -left-2 -top-2 h-8 w-8 rounded-tl-2xl border-l-2 border-t-2 border-accent/40" />
-          </div>
+        <h1
+          className="animate-fade-up mt-10 max-w-5xl font-display text-[2.5rem] font-medium leading-[1.04] tracking-tight sm:mt-14 sm:text-6xl lg:text-[5.25rem]"
+          style={{ animationDelay: "80ms" }}
+        >
+          I test software at <em className="font-normal italic text-accent">VML</em> and build websites for artists
+          and small businesses.
+        </h1>
 
-          {/* Text */}
-          <div className="text-center sm:text-left">
-            {building && (
-              <Link
-                href="/projects"
-                className="animate-fade-up mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur-sm transition-colors hover:border-accent/40 hover:text-foreground"
-                style={{ animationDelay: "50ms" }}
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-                </span>
-                Currently building{" "}
-                <span className="font-semibold text-foreground">{building.title}</span>
-              </Link>
-            )}
-            <p
-              className="animate-fade-up text-xs font-bold tracking-[0.3em] text-accent uppercase"
-              style={{ animationDelay: "100ms" }}
-            >
-              Jake Barrett
+        <div
+          className="animate-fade-up mt-12 grid gap-10 border-t border-border pt-8 md:grid-cols-12"
+          style={{ animationDelay: "160ms" }}
+        >
+          <div className="md:col-span-5">
+            <p className="eyebrow text-accent">For hiring managers</p>
+            <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
+              I build and run the Playwright automation that keeps a large brand platform&apos;s releases free of
+              regressions, and I&apos;ve built a test recorder that explains every line it writes.
             </p>
-            <h1
-              className="animate-fade-up mt-4 max-w-2xl font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-[2.75rem]"
-              style={{ animationDelay: "200ms" }}
-            >
-              I test software at{" "}
-              <span className="relative whitespace-nowrap">
-                VML
-                <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-accent/30" />
-              </span>{" "}
-              and build websites for artists and small businesses.
-            </h1>
-            <p
-              className="animate-fade-up mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground"
-              style={{ animationDelay: "300ms" }}
-            >
-              By day I write automated test suites in Playwright. Through my
-              LLC,{" "}
-              <a href="https://maroonraccoon.dev" target="_blank" rel="noopener noreferrer" className="font-medium text-accent hover:underline">
-                Maroon Raccoon
-              </a>
-              , I design and build fast, accessible sites for people who&apos;d
-              rather be making things.
-            </p>
-            <div
-              className="animate-fade-up mt-8 flex flex-wrap justify-center gap-4 sm:justify-start"
-              style={{ animationDelay: "400ms" }}
-            >
-              <Link
-                href="/lab"
-                className="group inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-glow"
-              >
-                <span className="font-normal opacity-80">Hiring?</span> Try my Playwright Lab
+            <div className="mt-6 flex flex-wrap items-center gap-5">
+              <Link href="/lab" className={primaryButton}>
+                Try the Playwright Lab
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
+              <a href={site.linkedin} target="_blank" rel="noopener noreferrer" className={textLink}>
+                LinkedIn <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+          <div className="md:col-span-5 md:col-start-8">
+            <p className="eyebrow text-accent">For clients</p>
+            <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
+              Through my LLC,{" "}
+              <a href={site.studio.url} target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-accent">
+                {site.studio.name}
+              </a>
+              , I design and build fast, accessible sites for people who&apos;d rather be making things.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-5">
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-semibold transition-all hover:border-accent/40 hover:bg-accent-light hover:text-accent"
               >
-                <span className="font-normal text-muted-foreground">Need a site?</span> Let&apos;s talk
+                Start a project
               </Link>
+              <a href="#client-work" className={textLink}>
+                What clients say
+              </a>
             </div>
           </div>
         </div>
-      </HeroSpotlight>
-
-      {/* ── Playwright Lab ── */}
-      <section className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-        <Reveal from="left">
-          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em] text-accent">
-            <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
-            Playwright Lab
-          </p>
-          <h2 className="mt-4 font-display text-3xl font-bold leading-tight sm:text-4xl">
-            Record a test. I&apos;ll explain every line.
-          </h2>
-          <p className="mt-4 leading-relaxed text-muted-foreground">
-            I write Playwright suites for a living. The Lab turns your clicks in a mini version of my art app into
-            the test I&apos;d write, then reviews any locator you swap in: strict-mode violations, DevTools XPath,
-            order-dependent <code className="font-mono text-sm text-foreground">nth()</code> and the rest.
-          </p>
-          <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
-            <li><span className="font-medium text-foreground">Locate like a user.</span> Roles and labels before CSS.</li>
-            <li><span className="font-medium text-foreground">Assert, don&apos;t wait.</span> Web-first assertions, no sleeps.</li>
-            <li><span className="font-medium text-foreground">Verified for real.</span> The exported code runs in Playwright.</li>
-          </ul>
-          <Link
-            href="/lab"
-            className="group mt-7 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent-hover hover:shadow-lg hover:shadow-glow"
-          >
-            Open the Lab
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </Reveal>
-        <Reveal delay={100}>
-          <LabTeaser />
-        </Reveal>
       </section>
 
-      {/* ── Featured work ── */}
+      {/* ── 01 Lead story: the Lab ── */}
       <section>
-        <Reveal from="left" className="flex items-center gap-4">
-          <h2 className="whitespace-nowrap font-display text-3xl font-bold">Featured Work</h2>
-          <div className="hidden h-px flex-1 bg-gradient-to-r from-border to-transparent sm:block" />
-          <Link
-            href="/projects"
-            className="group ml-auto inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-accent"
-          >
-            See all projects
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </Reveal>
+        <SectionHead
+          index="01"
+          label="The Lab"
+          title={<>Record a test. I&apos;ll explain every line.</>}
+          action={{ href: "/lab", label: "Open the Lab" }}
+        />
+        <div className="mt-10 grid grid-cols-[minmax(0,1fr)] items-start gap-10 lg:grid-cols-12">
+          <Reveal className="lg:col-span-5">
+            <p className="text-lg leading-relaxed text-muted-foreground">
+              The Lab turns your clicks in a mini version of my art app into the test I&apos;d write, then reviews any
+              locator you swap in: strict-mode violations, DevTools XPath, order-dependent{" "}
+              <code className="font-mono text-base text-foreground">nth()</code> and the rest.
+            </p>
+            <ol className="mt-8 divide-y divide-border border-y border-border">
+              {[
+                ["Locate like a user", "Roles and labels before CSS."],
+                ["Assert, don't wait", "Web-first assertions, no sleeps."],
+                ["Verified for real", "The exported code runs in Playwright."],
+              ].map(([title, body], i) => (
+                <li key={title} className="flex gap-5 py-4">
+                  <span className="eyebrow pt-1 text-accent">{String(i + 1).padStart(2, "0")}</span>
+                  <p>
+                    <span className="font-display text-lg font-medium">{title}.</span>{" "}
+                    <span className="text-muted-foreground">{body}</span>
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </Reveal>
+          <Reveal delay={100} className="lg:col-span-7">
+            <LabTeaser />
+          </Reveal>
+        </div>
+      </section>
 
-        <div className="mt-10 space-y-8">
-          {featured.map((project, i) => (
-            <Reveal key={project.slug} delay={i * 120}>
-              <ProjectCard project={project} wide />
+      {/* ── 02 At VML ── */}
+      <section>
+        <SectionHead
+          index="02"
+          label="At VML"
+          title="Keeping a large brand platform's releases free of regressions."
+        />
+        <dl className="mt-10 grid border-y border-border sm:grid-cols-3">
+          {vmlHighlights.map((h, i) => (
+            <Reveal
+              key={h.label}
+              delay={i * 80}
+              className="border-b border-border py-8 last:border-b-0 sm:border-b-0 sm:border-l sm:px-8 sm:first:border-l-0 sm:first:pl-0"
+            >
+              <dt>
+                <span className="block font-display text-6xl font-medium tracking-tight lg:text-7xl">{h.stat}</span>
+                <span className="eyebrow mt-3 block text-accent">{h.label}</span>
+              </dt>
+              <dd className="mt-4 leading-relaxed text-muted-foreground">{h.body}</dd>
+            </Reveal>
+          ))}
+        </dl>
+      </section>
+
+      {/* ── 03 Case study ── */}
+      <section>
+        <SectionHead
+          index="03"
+          label="Case study"
+          title={
+            <>
+              Swesso: learning art the way we <em className="font-normal italic">already</em> swipe.
+            </>
+          }
+          action={{ href: swessoCaseStudy.url, label: "Visit swesso.com", external: true }}
+        />
+        <div className="mt-10 grid gap-10 lg:grid-cols-12">
+          <Reveal className="lg:col-span-7">
+            <figure>
+              <div className="relative aspect-[800/408] overflow-hidden rounded-2xl border border-border">
+                <Image
+                  src={swessoCaseStudy.image}
+                  alt="Swesso's welcome screen: Van Gogh's Irises behind the Swesso wordmark"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 60vw"
+                />
+              </div>
+              <figcaption className="eyebrow mt-3 text-muted-foreground">Swesso · React, Spring Boot, PostgreSQL</figcaption>
+            </figure>
+          </Reveal>
+          <Reveal delay={100} className="lg:col-span-5">
+            <p className="font-display text-6xl font-medium tracking-tight">{swessoCaseStudy.stat.value}</p>
+            <p className="eyebrow mt-2 text-accent">{swessoCaseStudy.stat.label}</p>
+            <dl className="mt-8 space-y-6">
+              {(
+                [
+                  ["Brief", swessoCaseStudy.brief],
+                  ["Approach", swessoCaseStudy.approach],
+                  ["Outcome", swessoCaseStudy.outcome],
+                ] as const
+              ).map(([term, text]) => (
+                <div key={term} className="grid gap-1 sm:grid-cols-[6rem_1fr] sm:gap-4">
+                  <dt className="eyebrow pt-1 text-muted-foreground">{term}</dt>
+                  <dd className="leading-relaxed">{text}</dd>
+                </div>
+              ))}
+            </dl>
+            <Link href="/lab" className={`${textLink} mt-8`}>
+              Try a mini Swesso in the Lab <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── 04 Client work ── */}
+      <section id="client-work" className="scroll-mt-24">
+        <SectionHead
+          index="04"
+          label="Client work"
+          title="Websites for people who'd rather be making things."
+          action={{ href: "/contact", label: "Start a project" }}
+        />
+        <div className="mt-10 grid gap-12 md:grid-cols-2">
+          {testimonials.map((t, i) => (
+            <Reveal key={t.role} delay={i * 100}>
+              <figure className="border-l-2 border-accent pl-6">
+                <blockquote className="font-display text-2xl font-normal italic leading-snug sm:text-3xl">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <figcaption className="eyebrow mt-5 text-muted-foreground">
+                  {t.name && <span className="text-foreground">{t.name}, </span>}
+                  {t.role}
+                  {t.url && (
+                    <>
+                      {" · "}
+                      <a href={t.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+                        See the site
+                      </a>
+                    </>
+                  )}
+                </figcaption>
+              </figure>
             </Reveal>
           ))}
         </div>
       </section>
 
-      {/* ── About ── */}
+      {/* ── 05 Index ── */}
       <section>
-        <Reveal from="left" className="flex items-center gap-4">
-          <h2 className="font-display text-3xl font-bold">About Me</h2>
-          <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
-        </Reveal>
+        <SectionHead index="05" label="Index" title="Everything I've built." action={{ href: "/projects", label: "All projects" }} />
+        <table className="mt-8 w-full border-collapse text-left">
+          <thead>
+            <tr className="eyebrow border-b border-border text-muted-foreground">
+              <th scope="col" className="w-12 py-3 font-normal">No.</th>
+              <th scope="col" className="py-3 font-normal">Project</th>
+              <th scope="col" className="hidden py-3 font-normal sm:table-cell">For</th>
+              <th scope="col" className="hidden py-3 font-normal md:table-cell">Built with</th>
+              <th scope="col" className="py-3 text-right font-normal">
+                <span className="sr-only">Link</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((p, i) => (
+              <tr key={p.slug} className="group border-b border-border">
+                <td className="eyebrow py-5 align-baseline text-accent">{String(i + 1).padStart(2, "0")}</td>
+                <td className="py-5 align-baseline">
+                  <span className="font-display text-xl font-medium sm:text-2xl">{p.title}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground sm:hidden">{KIND_LABEL[p.kind]}</span>
+                </td>
+                <td className="hidden py-5 align-baseline text-sm text-muted-foreground sm:table-cell">{KIND_LABEL[p.kind]}</td>
+                <td className="hidden py-5 align-baseline font-mono text-xs text-muted-foreground md:table-cell">
+                  {p.techStack.slice(0, 3).join(" · ")}
+                </td>
+                <td className="py-5 text-right align-baseline text-sm">
+                  {p.liveDemoUrl ? (
+                    <a href={p.liveDemoUrl} target="_blank" rel="noopener noreferrer" className={textLink}>
+                      Visit <ArrowUpRight className="h-3.5 w-3.5" />
+                      <span className="sr-only"> {p.title}</span>
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">{p.status === "in-progress" ? "In progress" : "—"}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
 
-        <div className="mt-10 grid gap-10 sm:grid-cols-5">
-          <Reveal className="space-y-5 sm:col-span-3">
-            <p className="text-base leading-relaxed text-muted-foreground">
-              I&apos;m a full-stack developer who loves building things that make
-              people say &ldquo;Whoa.&rdquo; I work primarily with React,
-              TypeScript, and Node.js, and I care deeply about clean UI and
-              thoughtful backend logic.
+      {/* ── 06 About ── */}
+      <section>
+        <SectionHead index="06" label="About" />
+        <div className="mt-10 grid gap-10 lg:grid-cols-12">
+          <Reveal className="max-w-[14rem] lg:col-span-3 lg:max-w-none">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-xl border border-border">
+              <Image src="/jake.jpg" alt="Jake Barrett" fill className="object-cover" sizes="(max-width: 1024px) 14rem, 20vw" />
+            </div>
+          </Reveal>
+          <Reveal delay={100} className="lg:col-span-8 lg:col-start-5">
+            <p className="font-display text-3xl font-normal italic leading-snug sm:text-4xl">
+              &ldquo;I love building things that make people say &lsquo;whoa,&rsquo; and making sure they still work
+              after they ship.&rdquo;
             </p>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              I got my start in coding with{" "}
-              <span className="font-medium text-foreground">LaunchCode</span> in
-              2024. In the full-stack program I learned the fundamentals — HTML,
-              CSS, JavaScript, Python — plus frameworks like React and Flask with
-              databases like MySQL and MongoDB. The culmination of that journey
-              was{" "}
-              <Link
-                href="/projects"
-                className="link-underline font-medium text-accent"
-              >
-                Swesso
-              </Link>
-              , my full-stack capstone project.
-            </p>
-            <p className="text-base leading-relaxed text-muted-foreground">
-              Outside of that, I&apos;ve spent 5 years at{" "}
-              <span className="font-medium text-foreground">UDC</span>{" "}
-              maintaining a Squarespace site I built from scratch, and I run my
-              own LLC building sites for artists and businesses.
+            <div className="mt-8 max-w-2xl space-y-5 leading-relaxed text-muted-foreground">
+              <p>
+                By day I&apos;m a QA automation engineer at <span className="text-foreground">VML</span>, building
+                and running the Playwright suites that guard a large brand platform&apos;s releases. Through{" "}
+                <span className="text-foreground">{site.studio.name}</span>, my LLC, I design and build websites for
+                artists and small businesses. I work mostly in TypeScript, React, Next.js and Node.js.
+              </p>
+              <p>
+                I got my start with <span className="text-foreground">LaunchCode</span>{" "}in 2024, where my full-stack
+                capstone became Swesso. I&apos;ve also spent five years at <span className="text-foreground">UDC</span>{" "}
+                maintaining a Squarespace site I built from scratch.
+              </p>
+            </div>
+            <p className="eyebrow mt-8 text-muted-foreground">
+              Off the clock: playing music, sketching the next project, and training Finn, my corgi.
             </p>
           </Reveal>
-
-          <div className="flex flex-col gap-4 sm:col-span-2">
-            {[
-              {
-                icon: Code2,
-                title: "Builder",
-                text: "Always sketching out ideas for the next project.",
-              },
-              {
-                icon: Music,
-                title: "Musician",
-                text: "Playing music when I'm not writing code.",
-              },
-              {
-                icon: Dog,
-                title: "Corgi Dad",
-                text: "Training Finn is a full-time side gig.",
-              },
-              {
-                icon: Briefcase,
-                title: "Freelancer",
-                text: "Running Maroon Raccoon, building for clients.",
-              },
-            ].map(({ icon: Icon, title, text }, i) => (
-              <Reveal key={title} delay={100 + i * 100}>
-                <div className="group rounded-xl border border-border bg-surface p-5 transition-all hover:border-accent/30 hover:shadow-lg hover:shadow-glow">
-                  <Icon className="mb-3 h-5 w-5 text-accent transition-transform group-hover:scale-110" />
-                  <h3 className="font-display text-sm font-bold uppercase tracking-wider">
-                    {title}
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    {text}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
         </div>
       </section>
     </div>

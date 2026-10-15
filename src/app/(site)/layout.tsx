@@ -10,7 +10,7 @@ export default function SiteLayout({
   return (
     <>
       <Navbar />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
+      <main className="mx-auto w-full max-w-[1280px] flex-1 px-6 py-16">
         {children}
       </main>
       <Footer />

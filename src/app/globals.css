@@ -45,8 +45,19 @@
   --color-accent-light: var(--accent-light);
   --color-surface: var(--surface);
   --color-glow: var(--glow);
-  --font-display: var(--font-sora);
+  --font-display: var(--font-fraunces);
   --font-body: var(--font-dm-sans);
+  --font-mono: var(--font-jetbrains);
+}
+
+/* ── Editorial type ── */
+/* Small uppercase mono labels: running heads, eyebrows, metadata. */
+@utility eyebrow {
+  font-family: var(--font-jetbrains);
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 body {
@@ -77,32 +88,6 @@ body {
 }
 .animate-slide-left {
   animation: slide-in-left 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* ── Floating animation for hero decorations ── */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-10px); }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float-delayed {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%      { transform: translateY(-8px) rotate(2deg); }
-}
-.animate-float-delayed {
-  animation: float-delayed 8s ease-in-out infinite;
-}
-
-/* ── Pulse glow for accent elements ── */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 var(--glow); }
-  50%      { box-shadow: 0 0 30px 8px var(--glow); }
-}
-.animate-pulse-glow {
-  animation: pulse-glow 4s ease-in-out infinite;
 }
 
 /* ── Noise grain overlay ── */
@@ -184,91 +169,22 @@ body {
   .reveal { opacity: 1; transform: none; }
 }
 
-/* ── Project cards: per-project accent, cursor spotlight, tilt ── */
+/* ── Project cards: per-project accent on hover ── */
 .project-card {
   --card-accent: var(--accent);
-  --mx: 50%;
-  --my: 50%;
-  --rx: 0deg;
-  --ry: 0deg;
-  transform: perspective(1000px) rotateX(var(--ry)) rotateY(var(--rx));
   transition:
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
     border-color 0.4s ease,
     box-shadow 0.4s ease;
 }
 .project-card:hover {
-  transition:
-    transform 0.12s ease-out,
-    border-color 0.4s ease,
-    box-shadow 0.4s ease;
   border-color: color-mix(in srgb, var(--card-accent) 45%, transparent);
   box-shadow: 0 24px 60px -24px color-mix(in srgb, var(--card-accent) 55%, transparent);
-}
-/* Soft glow that follows the cursor across the card */
-.project-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  background: radial-gradient(
-    420px circle at var(--mx) var(--my),
-    color-mix(in srgb, var(--card-accent) 14%, transparent),
-    transparent 65%
-  );
-}
-/* Brighter ring on the border nearest the cursor */
-.project-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  border-radius: inherit;
-  padding: 1px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  background: radial-gradient(
-    260px circle at var(--mx) var(--my),
-    var(--card-accent),
-    transparent 70%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-.project-card:hover::before,
-.project-card:hover::after {
-  opacity: 1;
 }
 .project-card:hover .project-card-title {
   color: var(--card-accent);
 }
 .project-card:hover .project-card-pill {
   border-color: color-mix(in srgb, var(--card-accent) 35%, transparent);
-}
-
-/* ── Hero glow that trails the cursor (see components/hero-spotlight.tsx) ── */
-.hero-spotlight::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  background: radial-gradient(
-    500px circle at var(--hx, 50%) var(--hy, 40%),
-    var(--glow),
-    transparent 70%
-  );
-}
-.hero-spotlight:hover::before {
-  opacity: 1;
 }
 
 @media (prefers-reduced-motion: no-preference) {

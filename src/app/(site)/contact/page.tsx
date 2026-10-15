@@ -1,27 +1,28 @@
 import type { Metadata } from "next";
-import { Mail, MapPin } from "lucide-react";
+import { Mail } from "lucide-react";
+import { site } from "@/data/site";
 import { GitHubIcon, LinkedInIcon } from "@/components/icons";
 import ContactForm from "@/components/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Get in touch with Jake.",
+  description: "Hire Jake, or start a website project with Maroon Raccoon.",
 };
 
 export default function ContactPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-12">
       <div>
-        <div className="animate-slide-left flex items-center gap-4">
-          <h1 className="font-display text-3xl font-bold">Get in Touch</h1>
-          <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
-        </div>
+        <p className="eyebrow animate-fade-up text-accent">Contact</p>
+        <h1 className="animate-fade-up mt-4 font-display text-4xl font-medium tracking-tight sm:text-5xl" style={{ animationDelay: "50ms" }}>
+          Hiring, or need a website?
+        </h1>
         <p
-          className="animate-fade-up mt-3 text-muted-foreground"
+          className="animate-fade-up mt-4 text-lg leading-relaxed text-muted-foreground"
           style={{ animationDelay: "100ms" }}
         >
-          Have a question or want to work together? I&apos;d love to hear from
-          you.
+          Either way, this lands in my inbox. Tell me a little about the role or the project and I&apos;ll get back
+          to you.
         </p>
       </div>
 
@@ -31,7 +32,7 @@ export default function ContactPage() {
         style={{ animationDelay: "200ms" }}
       >
         <a
-          href="mailto:jacob_barrett@icloud.com"
+          href={`mailto:${site.email}`}
           className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/30 hover:shadow-lg hover:shadow-glow"
         >
           <div className="rounded-full bg-accent-light p-2.5">
@@ -43,7 +44,7 @@ export default function ContactPage() {
           </div>
         </a>
         <a
-          href="https://github.com/JakeBarrettDev"
+          href={site.github}
           target="_blank"
           rel="noopener noreferrer"
           className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/30 hover:shadow-lg hover:shadow-glow"
@@ -57,7 +58,7 @@ export default function ContactPage() {
           </div>
         </a>
         <a
-          href="https://www.linkedin.com/in/jacob-barrett-844007115/"
+          href={site.linkedin}
           target="_blank"
           rel="noopener noreferrer"
           className="group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition-all hover:border-accent/30 hover:shadow-lg hover:shadow-glow"

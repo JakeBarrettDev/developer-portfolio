@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { FileDown, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { site } from "@/data/site";
 
 const links = [
   { href: "/", label: "Home" },
@@ -20,7 +21,7 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
+      <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-5">
         <Link
           href="/"
           className="font-display text-xl font-semibold tracking-tight text-accent transition-opacity hover:opacity-80"
@@ -44,14 +45,16 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          <a
-            href="/resume.pdf"
-            download
-            className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-light px-4 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
-          >
-            <FileDown className="h-3.5 w-3.5" />
-            Resume
-          </a>
+          {site.resumeUrl && (
+            <a
+              href={site.resumeUrl}
+              download
+              className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-light px-4 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Resume
+            </a>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -82,14 +85,16 @@ export default function Navbar() {
               {label}
             </Link>
           ))}
-          <a
-            href="/resume.pdf"
-            download
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-light px-4 py-1.5 text-sm font-medium text-accent"
-          >
-            <FileDown className="h-3.5 w-3.5" />
-            Resume
-          </a>
+          {site.resumeUrl && (
+            <a
+              href={site.resumeUrl}
+              download
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent-light px-4 py-1.5 text-sm font-medium text-accent"
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              Resume
+            </a>
+          )}
         </div>
       )}
     </nav>

@@ -7,8 +7,6 @@ import { GitHubIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import type { Project } from "@/data/projects";
 
-const MAX_TILT_DEG = 4;
-
 export default function ProjectCard({
   project,
   wide = false,
@@ -17,27 +15,9 @@ export default function ProjectCard({
   /** Full-width layout with the image beside the text (from md up). */
   wide?: boolean;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    const card = cardRef.current;
-    if (e.pointerType !== "mouse" || !card) return;
-    const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    card.style.setProperty("--mx", `${x * 100}%`);
-    card.style.setProperty("--my", `${y * 100}%`);
-    // Wide cards tilt less so the effect reads the same across sizes.
-    const tilt = wide ? MAX_TILT_DEG / 2 : MAX_TILT_DEG;
-    card.style.setProperty("--rx", `${(x - 0.5) * tilt * 2}deg`);
-    card.style.setProperty("--ry", `${(0.5 - y) * tilt * 2}deg`);
-  }
-
   function handlePointerLeave() {
-    const card = cardRef.current;
-    card?.style.setProperty("--rx", "0deg");
-    card?.style.setProperty("--ry", "0deg");
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
@@ -46,14 +26,12 @@ export default function ProjectCard({
 
   return (
     <div
-      ref={cardRef}
       className={cn(
         "project-card group relative h-full overflow-hidden rounded-2xl border border-border bg-surface",
         wide && "md:grid md:grid-cols-5"
       )}
       style={{ "--card-accent": project.accent } as React.CSSProperties}
       onPointerEnter={() => videoRef.current?.play().catch(() => {})}
-      onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
       {/* Thumbnail / Video preview */}
@@ -118,7 +96,7 @@ export default function ProjectCard({
       >
         <h3
           className={cn(
-            "project-card-title font-display font-bold transition-colors",
+            "project-card-title font-display font-medium transition-colors",
             wide ? "text-2xl" : "text-xl"
           )}
         >

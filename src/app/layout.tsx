@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
-import { Sora, DM_Sans } from "next/font/google";
+import { Fraunces, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
-const sora = Sora({
-  variable: "--font-sora",
+// Editorial serif for display type; optical sizing sharpens large headlines.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
   display: "swap",
 });
@@ -39,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sora.variable} ${dmSans.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="grain flex min-h-full flex-col overflow-x-clip font-body">
         {children}

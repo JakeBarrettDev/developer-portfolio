@@ -46,7 +46,7 @@ export default async function BlogPostPage({
         <time className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">
           {post.meta.date}
         </time>
-        <h1 className="mt-3 font-display text-4xl font-bold leading-tight sm:text-5xl">
+        <h1 className="mt-3 font-display text-4xl font-medium leading-tight sm:text-5xl">
           {post.meta.title}
         </h1>
         <div className="mt-6 h-1 w-16 rounded-full bg-accent/30" />

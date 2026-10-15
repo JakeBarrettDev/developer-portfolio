@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { projects, type Project } from "@/data/projects";
 import ProjectCard from "@/components/project-card";
 import Reveal from "@/components/reveal";
-import HeroSpotlight from "@/components/hero-spotlight";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -59,20 +58,18 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-16">
       {/* ── Hero ── */}
-      <HeroSpotlight className="relative -mx-6 -mt-16 overflow-hidden px-6 pb-12 pt-20 sm:pt-28">
+      <section className="relative -mx-6 -mt-16 overflow-hidden px-6 pb-12 pt-20 sm:pt-28">
         <div className="hero-backdrop hero-gradient" />
-        <div className="pointer-events-none absolute right-10 top-16 h-28 w-28 animate-float rounded-full border border-accent/10 opacity-50 sm:right-24 sm:h-40 sm:w-40" />
-        <div className="pointer-events-none absolute bottom-32 right-1/4 hidden h-16 w-16 animate-float-delayed rounded-full bg-accent/5 sm:block" />
 
-        <div className="relative mx-auto max-w-5xl">
+        <div className="relative mx-auto max-w-[1280px]">
           <p
-            className="animate-fade-up text-xs font-bold uppercase tracking-[0.3em] text-accent"
+            className="animate-fade-up eyebrow text-accent"
             style={{ animationDelay: "0ms" }}
           >
             Projects
           </p>
           <h1
-            className="animate-fade-up mt-4 max-w-3xl font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl"
+            className="animate-fade-up mt-4 max-w-3xl font-display text-4xl font-medium leading-tight tracking-tight sm:text-5xl"
             style={{ animationDelay: "100ms" }}
           >
             Things I&apos;ve{" "}
@@ -99,7 +96,7 @@ export default function ProjectsPage() {
             {stats.map(({ value, label, href, dot }) => {
               const body = (
                 <>
-                  <span className="block font-display text-3xl font-bold sm:text-4xl">{value}</span>
+                  <span className="block font-display text-3xl font-medium sm:text-4xl">{value}</span>
                   <span className="mt-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground sm:text-sm">
                     {dot && <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />}
                     {label}
@@ -127,7 +124,7 @@ export default function ProjectsPage() {
 
         {/* Tech marquee */}
         <div
-          className="animate-fade-in marquee relative mx-auto mt-12 max-w-5xl overflow-hidden"
+          className="animate-fade-in marquee relative mx-auto mt-12 max-w-[1280px] overflow-hidden"
           style={{ animationDelay: "500ms" }}
         >
           <div className="marquee-track flex w-max gap-3">
@@ -142,7 +139,7 @@ export default function ProjectsPage() {
             ))}
           </div>
         </div>
-      </HeroSpotlight>
+      </section>
 
       {sections.map(({ id, title, blurb, dot, match }) => {
         const items = projects.filter(match);
@@ -159,7 +156,7 @@ export default function ProjectsPage() {
                     <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dot}`} />
                   </span>
                 )}
-                <h2 className="font-display text-xl font-bold">{title}</h2>
+                <h2 className="font-display text-xl font-medium">{title}</h2>
                 <span className="rounded-full border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   {items.length}
                 </span>

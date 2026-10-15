@@ -15,7 +15,7 @@ export default function BlogPage() {
     <div className="space-y-12">
       <div>
         <div className="animate-slide-left flex items-center gap-4">
-          <h1 className="font-display text-3xl font-bold">Blog</h1>
+          <h1 className="font-display text-3xl font-medium">Blog</h1>
           <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
         </div>
         <p
@@ -53,7 +53,7 @@ export default function BlogPage() {
                   <time className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase">
                     {post.date}
                   </time>
-                  <h2 className="mt-2 font-display text-xl font-bold transition-colors group-hover:text-accent">
+                  <h2 className="mt-2 font-display text-xl font-medium transition-colors group-hover:text-accent">
                     {post.title}
                   </h2>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
