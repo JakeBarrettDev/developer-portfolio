@@ -47,7 +47,7 @@ export default function SandboxApp({ className }: { className?: string }) {
   useEffect(() => () => clearTimeout(toastTimer.current), []);
 
   return (
-    <div className={cn("relative flex min-h-[30rem] flex-col bg-surface text-foreground", className)}>
+    <div id="sandbox" className={cn("relative flex min-h-[30rem] flex-col bg-surface text-foreground", className)}>
       {screen === "login" && (
         <LoginScreen
           onSignIn={(email) => {

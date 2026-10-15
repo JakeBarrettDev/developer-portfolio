@@ -14,8 +14,11 @@ export type LocatorPart =
   | { by: "placeholder"; text: Matcher }
   | { by: "text"; text: Matcher }
   | { by: "testid"; id: string }
+  | { by: "alt"; text: Matcher }
   | { by: "filter"; hasText: string }
-  | { by: "css"; selector: string };
+  | { by: "css"; selector: string }
+  | { by: "xpath"; expr: string }
+  | { by: "nth"; index: number };
 
 export type Strategy =
   | "role"
@@ -27,7 +30,30 @@ export type Strategy =
   | "testid"
   | "testid-assert"
   | "scoped"
-  | "css";
+  | "css"
+  | "alt"
+  // The options below are offered so visitors can pick them and get critiqued.
+  | "text-control"
+  | "nth"
+  | "css-class"
+  | "css-path"
+  | "xpath"
+  | "custom";
+
+export type Tone = "error" | "warning" | "info";
+
+export interface Issue {
+  tone: Tone;
+  title: string;
+  body: string;
+  docs?: string;
+}
+
+export interface Review {
+  grade: "solid" | "ok" | "brittle" | "fails";
+  count: number;
+  issues: Issue[];
+}
 
 export interface Suggestion {
   parts: LocatorPart[];
@@ -42,6 +68,8 @@ export interface Suggestion {
     /** How many of the colliding matches live outside the store's own markup. */
     outside?: number;
   };
+  /** Set when the locator is offered as an option or typed in by a visitor. */
+  review?: Review;
 }
 
 export interface SuggestOptions {
@@ -62,7 +90,26 @@ function descendants(scope: ParentNode): Element[] {
   return Array.from(scope.querySelectorAll("*")).filter(isVisible);
 }
 
-function queryPart(scope: ParentNode, part: Exclude<LocatorPart, { by: "filter" }>): Element[] {
+function queryXPath(scope: ParentNode, expr: string): Element[] {
+  // XPath can't see into shadow roots, and neither can Playwright's xpath engine.
+  if (scope instanceof ShadowRoot || !(scope instanceof Node)) return [];
+  const doc = scope.ownerDocument ?? (scope as unknown as Document);
+  // Like Playwright, a chained `//` expression searches inside its scope.
+  const relative = expr.startsWith("//") ? `.${expr}` : expr;
+  try {
+    const result = doc.evaluate(relative, scope, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+    const out: Element[] = [];
+    for (let i = 0; i < result.snapshotLength; i++) {
+      const node = result.snapshotItem(i);
+      if (node instanceof Element && node !== scope && scope.contains(node) && isVisible(node)) out.push(node);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function queryPart(scope: ParentNode, part: Exclude<LocatorPart, { by: "filter" } | { by: "nth" }>): Element[] {
   switch (part.by) {
     case "role":
       return descendants(scope).filter(
@@ -79,8 +126,18 @@ function queryPart(scope: ParentNode, part: Exclude<LocatorPart, { by: "filter" 
     }
     case "testid":
       return descendants(scope).filter((el) => el.getAttribute("data-testid") === part.id);
+    case "alt":
+      return descendants(scope).filter(
+        (el) => el.matches("img, area, input[type='image']") && matches(el.getAttribute("alt") ?? "", part.text),
+      );
     case "css":
-      return Array.from(scope.querySelectorAll(part.selector)).filter(isVisible);
+      try {
+        return Array.from(scope.querySelectorAll(part.selector)).filter(isVisible);
+      } catch {
+        return [];
+      }
+    case "xpath":
+      return queryXPath(scope, part.expr);
   }
 }
 
@@ -91,6 +148,9 @@ export function resolve(parts: LocatorPart[], roots: ParentNode | ParentNode[]):
     if (part.by === "filter") {
       const needle = part.hasText.toLowerCase();
       current = current.filter((node) => normalize(node.textContent).toLowerCase().includes(needle));
+    } else if (part.by === "nth") {
+      const pick = current.at(part.index);
+      current = pick ? [pick] : [];
     } else {
       const next = new Set<Element>();
       for (const scope of current) for (const el of queryPart(scope, part)) next.add(el);
@@ -123,8 +183,12 @@ function toRegexSource(name: string): string {
 }
 
 /** Own-element candidates in Playwright's recommended priority order. */
-function candidates(el: Element, opts: SuggestOptions): Suggestion[] {
+export function candidates(el: Element, opts: SuggestOptions = {}): Suggestion[] {
   const out: Suggestion[] = [];
+
+  const alt = el.matches("img, area, input[type='image']") ? normalize(el.getAttribute("alt")) : "";
+  if (alt) out.push({ parts: [{ by: "alt", text: { kind: "string", value: alt } }], strategy: "alt" });
+
   const role = getRole(el);
   const name = getAccessibleName(el);
   const nameFromText = !el.hasAttribute("aria-label") && !el.hasAttribute("aria-labelledby") && !isFormControl(el);
@@ -177,7 +241,7 @@ function candidates(el: Element, opts: SuggestOptions): Suggestion[] {
   return out;
 }
 
-function isUnique(parts: LocatorPart[], el: Element, roots: ParentNode[]): boolean {
+export function isUnique(parts: LocatorPart[], el: Element, roots: ParentNode[]): boolean {
   const hits = resolve(parts, roots);
   return hits.length === 1 && hits[0] === el;
 }
@@ -204,17 +268,47 @@ function scopeLocators(scope: Element, roots: ParentNode[]): { parts: LocatorPar
   return out.filter((s) => isUnique(s.parts, scope, roots));
 }
 
-function cssPath(el: Element, root: Element): string {
+/** The store's outermost element, which carries id="sandbox" on every page. */
+export const SANDBOX_ID = "sandbox";
+
+function anchorOf(root: Element): Element {
+  return root.querySelector(`#${SANDBOX_ID}`) ?? root;
+}
+
+/** Index among same-tag siblings, or null when the tag is unique there (DevTools omits it). */
+function sameTagIndex(node: Element): number | null {
+  const siblings = node.parentElement ? Array.from(node.parentElement.children) : [node];
+  const sameTag = siblings.filter((c) => c.tagName === node.tagName);
+  return sameTag.length > 1 ? sameTag.indexOf(node) + 1 : null;
+}
+
+/** What DevTools' "Copy selector" gives you, anchored to the store's id. */
+export function cssPath(el: Element, root: Element): string {
+  const anchor = anchorOf(root);
   const segments: string[] = [];
-  let node: Element | null = el;
-  while (node && node !== root) {
-    const tag: string = node.tagName.toLowerCase();
-    const parent: Element | null = node.parentElement;
-    const index = parent ? Array.from(parent.children).filter((c) => c.tagName === node!.tagName).indexOf(node) + 1 : 1;
-    segments.unshift(`${tag}:nth-of-type(${index})`);
-    node = parent;
+  for (let node: Element | null = el; node && node !== anchor && node !== root; node = node.parentElement) {
+    const tag = node.tagName.toLowerCase();
+    const siblings = node.parentElement ? Array.from(node.parentElement.children) : [node];
+    segments.unshift(sameTagIndex(node) ? `${tag}:nth-child(${siblings.indexOf(node) + 1})` : tag);
   }
-  return segments.join(" > ");
+  return [`#${SANDBOX_ID}`, ...segments].join(" > ");
+}
+
+/** What DevTools' "Copy XPath" gives you. */
+export function xpathFor(el: Element, root: Element): string {
+  const anchor = anchorOf(root);
+  const segments: string[] = [];
+  for (let node: Element | null = el; node && node !== anchor && node !== root; node = node.parentElement) {
+    const index = sameTagIndex(node);
+    segments.unshift(`${node.tagName.toLowerCase()}${index ? `[${index}]` : ""}`);
+  }
+  return [`//*[@id="${SANDBOX_ID}"]`, ...segments].join("/");
+}
+
+/** A selector built from the element's classes, the way people often write them by hand. */
+export function classSelector(el: Element): string | null {
+  const classes = Array.from(el.classList).filter((c) => /^[a-z][\w-]*$/i.test(c));
+  return classes.length ? `${el.tagName.toLowerCase()}.${classes.slice(0, 2).join(".")}` : null;
 }
 
 /**
@@ -291,10 +385,16 @@ export function partCode(part: LocatorPart): string {
       return `.getByText(${matcherCode(part.text)})`;
     case "testid":
       return `.getByTestId(${quote(part.id)})`;
+    case "alt":
+      return `.getByAltText(${matcherCode(part.text)})`;
     case "filter":
       return `.filter({ hasText: ${quote(part.hasText)} })`;
     case "css":
       return `.locator(${quote(part.selector)})`;
+    case "xpath":
+      return `.locator(${quote(`xpath=${part.expr}`)})`;
+    case "nth":
+      return part.index === 0 ? ".first()" : part.index === -1 ? ".last()" : `.nth(${part.index})`;
   }
 }
 

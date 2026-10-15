@@ -4,7 +4,9 @@ import { startTransition, useCallback, useEffect, useRef, useState } from "react
 import { Check, CircleDot, Copy, ExternalLink, Pause, RotateCcw, ScanSearch, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFormControl, normalize } from "@/lib/lab/aria";
-import { locatorCode, resolve, suggestLocator, type Suggestion } from "@/lib/lab/locator";
+import { locatorCode, pageRoots, resolve, suggestLocator, type Review, type Suggestion } from "@/lib/lab/locator";
+import { locatorOptions, review } from "@/lib/lab/review";
+import { parseLocator } from "@/lib/lab/parse";
 import { explain, stepCode, testFile, type Action, type Assertion, type Step } from "@/lib/lab/steps";
 import SandboxApp from "./sandbox-app";
 import CodeLine from "./code-line";
@@ -22,6 +24,8 @@ interface AssertOption {
   label: string;
   action: Extract<Action, { type: "expect" }>;
   locator: Suggestion;
+  options: Suggestion[];
+  target: Element;
   hint?: string;
 }
 
@@ -34,17 +38,21 @@ const TEXT_INPUT_TYPES = new Set(["text", "email", "password", "search", "tel", 
 const isTextInput = (el: Element): el is HTMLInputElement | HTMLTextAreaElement =>
   el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && TEXT_INPUT_TYPES.has(el.type));
 
-/** The element a click or hover really refers to, e.g. the button rather than the icon inside it. */
-function pickTarget(raw: EventTarget | null, root: Element, mode: Mode): Element | null {
+/**
+ * The element a click or hover really refers to, e.g. the button rather than
+ * the icon inside it. "action" targets are things a click gets recorded on;
+ * "inspect" also covers text, headings and images, for hovering and asserting.
+ */
+function pickTarget(raw: EventTarget | null, root: Element, purpose: "action" | "inspect"): Element | null {
   if (!(raw instanceof Element) || !root.contains(raw) || raw === root) return null;
   const interactive = raw.closest(INTERACTIVE);
   if (interactive && root.contains(interactive)) return interactive;
 
   const label = raw.closest("label");
-  if (label?.control && root.contains(label.control)) return mode === "assert" ? label.control : null;
+  if (label?.control && root.contains(label.control)) return purpose === "inspect" ? label.control : null;
 
-  if (mode !== "assert") return null;
-  const meaningful = raw.closest("[data-testid], [role='status'], [role='alert'], h1, h2, h3, h4, h5, h6");
+  if (purpose !== "inspect") return null;
+  const meaningful = raw.closest("img, [data-testid], [role='status'], [role='alert'], h1, h2, h3, h4, h5, h6");
   if (meaningful && root.contains(meaningful)) return meaningful;
   const hasOwnText = Array.from(raw.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && normalize(n.textContent));
   return hasOwnText ? raw : null;
@@ -56,16 +64,19 @@ function hintFor(el: Element, root: Element): string | undefined {
 }
 
 function assertOptions(el: Element, root: Element): AssertOption[] {
-  const base = suggestLocator(el, root);
+  const base = locatorOptions(el, root);
   const hint = hintFor(el, root);
-  const options: AssertOption[] = [{ label: "toBeVisible()", action: { type: "expect", assertion: "toBeVisible" }, locator: base, hint }];
-  const add = (assertion: Assertion, value: string | undefined, locator = base) =>
+  const options: AssertOption[] = [];
+  const add = (assertion: Assertion, value: string | undefined, located = base) =>
     options.push({
       label: value === undefined ? `${assertion}()` : `${assertion}('${value}')`,
       action: { type: "expect", assertion, value },
-      locator,
+      locator: located.best,
+      options: located.options,
+      target: el,
       hint,
     });
+  add("toBeVisible", undefined);
 
   if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
     if (el.checked) add("toBeChecked", undefined);
@@ -73,7 +84,7 @@ function assertOptions(el: Element, root: Element): AssertOption[] {
     if (el.value) add("toHaveValue", el.value);
   } else {
     const text = normalize(el.textContent);
-    if (text && text.length <= 80) add("toHaveText", text, suggestLocator(el, root, { avoidText: true }));
+    if (text && text.length <= 80) add("toHaveText", text, locatorOptions(el, root, { assertText: text }));
   }
   return options;
 }
@@ -124,7 +135,8 @@ export default function TestLab() {
         startTransition(() => setSteps((s) => s.map((step) => (step.id === prev.id ? { ...step, action } : step))));
         return;
       }
-      const step = { action, locator: suggestLocator(el, root), hint: hintFor(el, root) };
+      const { best, options } = locatorOptions(el, root);
+      const step = { action, locator: best, options, target: el, hint: hintFor(el, root) };
       const id = `s${nextId.current++}`;
       lastFill.current = opts?.merge ? { el, id } : null;
       startTransition(() => {
@@ -143,7 +155,7 @@ export default function TestLab() {
     const onClick = (e: MouseEvent) => {
       const m = modeRef.current;
       if (m === "paused") return;
-      const target = pickTarget(e.target, root, m);
+      const target = pickTarget(e.target, root, m === "assert" ? "inspect" : "action");
 
       if (m === "assert") {
         e.preventDefault();
@@ -199,14 +211,13 @@ export default function TestLab() {
         skipClickUntil.current = performance.now() + 100;
         record(e.target, { type: "press", key: "Enter" });
       } else if (e.key === "Escape") {
-        const target = pickTarget(e.target, root, "record");
+        const target = pickTarget(e.target, root, "action");
         if (target) record(target, { type: "press", key: "Escape" });
       }
     };
 
     const onMouseOver = (e: MouseEvent) => {
-      const m = modeRef.current;
-      const target = m === "paused" ? null : pickTarget(e.target, root, m);
+      const target = modeRef.current === "paused" ? null : pickTarget(e.target, root, "inspect");
       setHover(target ? { box: boxOf(target), code: locatorCode(suggestLocator(target, root).parts) } : null);
     };
     const onMouseLeave = () => setHover(null);
@@ -250,6 +261,11 @@ export default function TestLab() {
     if (lastFill.current?.id === id) lastFill.current = null;
     if (selected === id) setSelected(GOTO.id);
   };
+
+  const pickLocator = (id: string, locator: Suggestion) =>
+    setSteps((s) => s.map((step) => (step.id === id ? { ...step, locator } : step)));
+
+  const issueCount = steps.filter((step) => toneOf(step)).length;
 
   const showElement = (step: Step) => {
     const root = rootRef.current;
@@ -377,7 +393,7 @@ export default function TestLab() {
                         role="menuitem"
                         autoFocus={o === menu.options[0]}
                         onClick={() => {
-                          addStep({ action: o.action, locator: o.locator, hint: o.hint });
+                          addStep({ action: o.action, locator: o.locator, options: o.options, target: o.target, hint: o.hint });
                           changeMode("record");
                         }}
                         className="block w-full truncate px-3 py-2 text-left font-mono text-xs transition-colors hover:bg-accent-light hover:text-accent focus:bg-accent-light focus:text-accent focus:outline-none"
@@ -407,6 +423,11 @@ export default function TestLab() {
             <span className="rounded-full bg-[#a01a2a]/25 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#f08a98]">
               {steps.length - 1} step{steps.length === 2 ? "" : "s"}
             </span>
+            {issueCount > 0 && (
+              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+                {issueCount} to review
+              </span>
+            )}
             <button
               type="button"
               onClick={copy}
@@ -437,6 +458,7 @@ export default function TestLab() {
 
             {steps.map((step) => {
               const isSelected = step.id === selected;
+              const tone = toneOf(step);
               return (
                 <div
                   key={step.id}
@@ -444,6 +466,12 @@ export default function TestLab() {
                   onMouseEnter={() => showElement(step)}
                   onMouseLeave={() => setHighlights([])}
                 >
+                  {tone && (
+                    <span
+                      title={tone === "error" ? "This locator fails" : "This locator is brittle"}
+                      className={cn("absolute left-1.5 top-[0.55rem] h-1.5 w-1.5 rounded-full", tone === "error" ? "bg-red-400" : "bg-amber-300")}
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => setSelected(step.id)}
@@ -469,7 +497,14 @@ export default function TestLab() {
                       <X className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   )}
-                  {isSelected && <Notes step={step} />}
+                  {isSelected && (
+                    <>
+                      <Notes step={step} />
+                      {step.options && (
+                        <LocatorPicker step={step} getRoot={() => rootRef.current} onPick={(l) => pickLocator(step.id, l)} />
+                      )}
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -491,8 +526,8 @@ function Notes({ step }: { step: Step }) {
   return (
     <div className="space-y-2 px-4 pb-3 pt-1 font-body">
       {explain(step).map((note) => (
-        <div key={note.title} className="rounded-lg border border-[#2e2e32] bg-[#1a1a1d] px-3 py-2">
-          <p className="flex items-center gap-2 text-xs font-semibold text-[#e8e4df]">
+        <div key={note.title} className={cn("rounded-lg border px-3 py-2", note.tone ? TONE_STYLES[note.tone].box : "border-[#2e2e32] bg-[#1a1a1d]")}>
+          <p className={cn("flex items-center gap-2 text-xs font-semibold", note.tone ? TONE_STYLES[note.tone].title : "text-[#e8e4df]")}>
             {note.title}
             {note.docs && (
               <a
@@ -512,3 +547,139 @@ function Notes({ step }: { step: Step }) {
   );
 }
 
+const TONE_STYLES = {
+  error: { box: "border-red-400/30 bg-red-400/[0.07]", title: "text-red-300" },
+  warning: { box: "border-amber-300/30 bg-amber-300/[0.07]", title: "text-amber-200" },
+  info: { box: "border-sky-400/25 bg-sky-400/[0.06]", title: "text-sky-200" },
+};
+
+const GRADES: Record<Review["grade"], { label: string; className: string }> = {
+  solid: { label: "Solid", className: "bg-emerald-400/15 text-emerald-300" },
+  ok: { label: "OK", className: "bg-sky-400/15 text-sky-300" },
+  brittle: { label: "Brittle", className: "bg-amber-300/15 text-amber-200" },
+  fails: { label: "Fails", className: "bg-red-400/15 text-red-300" },
+};
+
+/** The worst review finding on a step's locator, for the gutter marker. */
+function toneOf(step: Step): "error" | "warning" | null {
+  const issues = step.locator?.review?.issues ?? [];
+  if (issues.some((i) => i.tone === "error")) return "error";
+  if (issues.some((i) => i.tone === "warning")) return "warning";
+  return null;
+}
+
+function GradePill({ grade }: { grade: Review["grade"] }) {
+  return (
+    <span className={cn("shrink-0 rounded px-1.5 py-0.5 font-body text-[10px] font-semibold uppercase tracking-wider", GRADES[grade].className)}>
+      {GRADES[grade].label}
+    </span>
+  );
+}
+
+function LocatorPicker({
+  step,
+  getRoot,
+  onPick,
+}: {
+  step: Step;
+  getRoot: () => Element | null;
+  onPick: (locator: Suggestion) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const [result, setResult] = useState<{ error: string } | { suggestion: Suggestion } | null>(null);
+  const current = step.locator && locatorCode(step.locator.parts);
+  const options = step.options ?? [];
+  const isCustom = step.locator && !options.some((o) => locatorCode(o.parts) === current);
+  const assertText = step.action.type === "expect" && step.action.assertion === "toHaveText" ? step.action.value : undefined;
+
+  const evaluate = (value: string) => {
+    setDraft(value);
+    const root = getRoot();
+    if (!value.trim() || !root) return setResult(null);
+    const parsed = parseLocator(value);
+    if ("error" in parsed) return setResult(parsed);
+    const verdict = review(parsed.parts, pageRoots(root), { target: step.target, assertText });
+    setResult({ suggestion: { parts: parsed.parts, strategy: "custom", review: verdict } });
+  };
+
+  const rows = isCustom && step.locator ? [step.locator, ...options] : options;
+
+  return (
+    <div className="mx-4 mb-3 overflow-hidden rounded-lg border border-[#2e2e32] font-body">
+      <p className="flex items-baseline justify-between gap-2 border-b border-[#2e2e32] bg-[#1a1a1d] px-3 py-2 text-xs font-semibold text-[#e8e4df]">
+        Locator options
+        <span className="text-[10px] font-normal text-[#7f848e]">Try a worse one and see what I&apos;d say in review</span>
+      </p>
+      <ul>
+        {rows.map((o, i) => {
+          const code = locatorCode(o.parts);
+          const active = code === current;
+          return (
+            <li key={code}>
+              <button
+                type="button"
+                onClick={() => onPick(o)}
+                aria-pressed={active}
+                className={cn(
+                  "flex w-full items-center gap-2 border-l-2 px-3 py-1.5 text-left transition-colors",
+                  active ? "border-[#82aaff] bg-white/[0.05]" : "border-transparent hover:bg-white/[0.03]",
+                )}
+              >
+                {o.review && <GradePill grade={o.review.grade} />}
+                <span className="min-w-0 flex-1 truncate font-mono text-[11px]">
+                  <CodeLine code={code} />
+                </span>
+                {o.strategy === "custom" ? (
+                  <span className="shrink-0 text-[10px] text-[#82aaff]">yours</span>
+                ) : (
+                  i === (isCustom ? 1 : 0) && <span className="shrink-0 text-[10px] text-emerald-300">recommended</span>
+                )}
+                {o.review && (
+                  <span className="w-14 shrink-0 text-right text-[10px] text-[#7f848e]">
+                    {o.review.count} match{o.review.count === 1 ? "" : "es"}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="border-t border-[#2e2e32] p-3">
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-[#7f848e]" htmlFor={`custom-${step.id}`}>
+          Write your own
+        </label>
+        <div className="mt-1.5 flex gap-2">
+          <input
+            id={`custom-${step.id}`}
+            value={draft}
+            onChange={(e) => evaluate(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && result && "suggestion" in result) onPick(result.suggestion);
+            }}
+            placeholder="page.locator('//button[2]')"
+            spellCheck={false}
+            autoComplete="off"
+            className="min-w-0 flex-1 rounded-md border border-[#2e2e32] bg-[#0f0f11] px-2 py-1.5 font-mono text-[11px] text-[#e8e4df] outline-none placeholder:text-[#5c6370] focus:border-[#82aaff]/60"
+          />
+          <button
+            type="button"
+            disabled={!result || !("suggestion" in result)}
+            onClick={() => result && "suggestion" in result && onPick(result.suggestion)}
+            className="rounded-md bg-[#82aaff]/15 px-2.5 text-[11px] font-semibold text-[#82aaff] transition-colors hover:bg-[#82aaff]/25 disabled:opacity-40"
+          >
+            Use
+          </button>
+        </div>
+        {result && "error" in result && <p className="mt-1.5 text-[11px] text-red-300">{result.error}</p>}
+        {result && "suggestion" in result && result.suggestion.review && (
+          <p className="mt-1.5 flex items-center gap-2 text-[11px] text-[#9a9590]">
+            <GradePill grade={result.suggestion.review.grade} />
+            {result.suggestion.review.count} match{result.suggestion.review.count === 1 ? "" : "es"}
+            {result.suggestion.review.issues[0] && <span className="truncate">· {result.suggestion.review.issues[0].title}</span>}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}

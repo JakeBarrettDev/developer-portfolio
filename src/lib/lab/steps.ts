@@ -1,4 +1,4 @@
-import { locatorCode, partCode, quote, type Suggestion } from "./locator";
+import { locatorCode, partCode, quote, type Suggestion, type Tone } from "./locator";
 
 export type Assertion = "toBeVisible" | "toHaveText" | "toHaveValue" | "toBeChecked";
 
@@ -18,12 +18,18 @@ export interface Step {
   locator?: Suggestion;
   /** A `data-lab-hint` from the sandbox element, for context-specific notes. */
   hint?: string;
+  /** Reviewed locator options for the recorded element, best first. */
+  options?: Suggestion[];
+  /** The recorded element, while it's still on screen. */
+  target?: Element;
 }
 
 export interface Note {
   title: string;
   body: string;
   docs?: string;
+  /** Set for review findings; plain explanations have none. */
+  tone?: Tone;
 }
 
 const DOCS = {
@@ -103,7 +109,7 @@ export function testFile(name: string, steps: Step[]): string {
 
 // ── Annotations ──
 
-function locatorNote(s: Suggestion): Note {
+function locatorNote(s: Suggestion): Note | null {
   const d = s.detail ?? {};
   switch (s.strategy) {
     case "role":
@@ -171,6 +177,20 @@ function locatorNote(s: Suggestion): Note {
         }. Instead of .nth(), which breaks when the order changes, the locator first narrows to the ${d.scopeRole}${d.hasText ? ` containing '${d.hasText}'` : ""}.`,
         docs: DOCS.filter,
       };
+    case "alt":
+      return {
+        title: "getByAltText for images",
+        body: "Alt text is what screen readers announce, so it's the user-facing way to identify an image. A missing alt breaks the locator and the accessibility at the same time.",
+        docs: DOCS.locators,
+      };
+    // Options a visitor chose over the recommendation: the review findings say it all.
+    case "text-control":
+    case "nth":
+    case "css-class":
+    case "css-path":
+    case "xpath":
+    case "custom":
+      return null;
     case "css":
       return {
         title: "CSS fallback (a smell)",
@@ -270,8 +290,9 @@ const HINTS: Record<string, Note> = {
 };
 
 export function explain(step: Step): Note[] {
-  const notes: Note[] = [];
-  if (step.locator) notes.push(locatorNote(step.locator));
+  const notes: Note[] = [...(step.locator?.review?.issues ?? [])];
+  const locator = step.locator && locatorNote(step.locator);
+  if (locator) notes.push(locator);
   notes.push(actionNote(step.action));
   if (step.hint && HINTS[step.hint]) notes.push(HINTS[step.hint]);
   return notes;
