@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, ArrowUpRight, Lock } from "lucide-react";
 import Reveal from "@/components/reveal";
+import SectionHead from "@/components/section-head";
 import { GitHubIcon } from "@/components/icons";
 import { projects, type Project } from "@/data/projects";
 import { testimonials } from "@/data/profile";
@@ -39,7 +40,8 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
   const next = projects[(index + 1) % projects.length];
   const { caseStudy } = project;
   const quote = testimonials.find((t) => t.project === project.slug);
-  const status = project.status === "live" ? "Live" : project.status === "in-progress" ? "In progress" : null;
+  const status =
+    project.status === "live" ? (project.active ? "Live · still building" : "Live") : project.status === "in-progress" ? "In progress" : null;
 
   return (
     <article className="space-y-16 sm:space-y-24">
@@ -144,6 +146,46 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
           </dl>
         </Reveal>
       </section>
+
+      {caseStudy.differentiators && (
+        <section>
+          <SectionHead index="01" label="What sets it apart" />
+          <ol className="mt-8 grid gap-x-12 gap-y-10 md:grid-cols-2 lg:grid-cols-3">
+            {caseStudy.differentiators.map((d, i) => (
+              <li key={d.title}>
+                <Reveal delay={(i % 3) * 80}>
+                  <span className="eyebrow text-accent">{String(i + 1).padStart(2, "0")}</span>
+                  <h3 className="mt-2 font-display text-2xl font-medium leading-snug">{d.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">{d.body}</p>
+                </Reveal>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {caseStudy.engineering && (
+        <section>
+          <SectionHead index={caseStudy.differentiators ? "02" : "01"} label="Engineering highlights" />
+          <ul className="mt-8 grid gap-x-12 md:grid-cols-2">
+            {caseStudy.engineering.map((item) => {
+              const [lead, ...restParts] = item.split(": ");
+              const rest = restParts.join(": ");
+              return (
+                <li key={item} className="border-b border-border py-5 leading-relaxed text-muted-foreground">
+                  {rest ? (
+                    <>
+                      <span className="font-medium text-foreground">{lead}.</span> {rest[0].toUpperCase() + rest.slice(1)}
+                    </>
+                  ) : (
+                    item
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {quote && (
         <Reveal>

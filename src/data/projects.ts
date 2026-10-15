@@ -6,6 +6,10 @@ export interface CaseStudy {
   outcome: string;
   /** A headline number, when there's a real one. */
   stat?: { value: string; label: string };
+  /** What makes it different, for projects with a story to tell. */
+  differentiators?: { title: string; body: string }[];
+  /** Notable engineering decisions. */
+  engineering?: string[];
 }
 
 export interface Project {
@@ -20,6 +24,8 @@ export interface Project {
   previewVideo?: string;
   /** "live" = shipped and publicly reachable at liveDemoUrl. */
   status?: "live" | "in-progress";
+  /** Live but still being actively built; shown as "Now building" on the homepage. */
+  active?: boolean;
   /** Shown on the homepage and as a full-width card on /projects. */
   featured?: boolean;
   /** Hover glow color for this project's card. */
@@ -55,20 +61,59 @@ export const projects: Project[] = [
     slug: "cartomancer",
     kind: "personal",
     caseStudy: {
-      role: "Design and build, in progress",
-      brief: "Give Dungeon Masters one place for a campaign's world, with lore, NPCs, quests and faction clocks all anchored to the map.",
+      role: "Solo design and build, directing a team of AI coding agents",
+      brief:
+        "Most D&D tools are either a wiki you fill in by hand or an AI that writes lore for you. I wanted a librarian: something that files what happened at the table, keeps the record straight, and leaves the DM with the final word.",
       approach:
-        "Map-first with Leaflet, and local-first: everything is stored in the browser with Dexie, so there's no account to make. Spark, an optional collaborator built on the Claude API, helps prep sessions and flags continuity conflicts.",
-      outcome: "In progress.",
+        "Map-first and local-first. Spark, the optional AI, files session notes into a canon ledger and flags contradictions, and everything it suggests waits in one review inbox to keep, edit or undo. I built it solo, directing AI coding agents through written specs, reviews and browser verification.",
+      outcome:
+        "Live at cartomancer-phi.vercel.app: about 90,000 lines of TypeScript and 750+ commits, with 1,596 automated tests. I use it to run my own campaign.",
+      stat: { value: "1,596", label: "automated tests" },
+      differentiators: [
+        {
+          title: "Canon you can trust",
+          body: "Every fact records when it's true (timeless, backstory, played in Session 4, or planned) and who may know it, and a permanent changelog shows which sentences Spark wrote and which the DM did.",
+        },
+        {
+          title: "Nothing lands without the DM's say",
+          body: "Spark's suggestions arrive marked in one review inbox. Keep, edit or discard them, and undo any batch in one step.",
+        },
+        {
+          title: "Works without AI",
+          body: "Every Spark feature has a manual path, so it's a complete campaign manager with no API key at all.",
+        },
+        {
+          title: "Bring your own key, see the cost first",
+          body: "AI calls go straight from the browser to the provider, every action shows its estimated price before it runs, and a spend cap stops surprises.",
+        },
+        {
+          title: "The DM owns the data",
+          body: "Worlds live on the device, back up to a folder the DM chooses, and can sync through the DM's own server. Export is always open.",
+        },
+        {
+          title: "Built from how DMs actually prep",
+          body: "Planning follows Mulligan's toy method and Matt Mercer's scene prep: situations, not scripts, with arcs as seasons and sessions as episodes.",
+        },
+      ],
+      engineering: [
+        "Local-first data safety: multi-step writes run in single transactions, and undo uses compare-and-swap so it never overwrites newer edits.",
+        "Sync without data loss: last-write-wins with a base-version guard, so a device that has never synced can't overwrite the cloud copy, plus 20 retained snapshots per world.",
+        "Provenance: every AI-written sentence is tagged until kept, and a changelog records Spark and DM edits side by side.",
+        "AI cost discipline: model tiers matched to each task, prompt caching of the world context, estimates before every call, and untrusted text wrapped before it enters a prompt.",
+        "Quality process: 1,596 automated tests, a golden-set evaluation for fact extraction, a coverage ledger of what was last tested and at which commit, and multi-agent reviews including panels of simulated DMs.",
+        "Accessibility: a UI-scale setting, no text under 12px, and theme tokens throughout, tested at 140% scale on tablet and phone widths.",
+      ],
     },
     accent: "#b8893e",
     featured: true,
     title: "Cartomancer",
     description:
-      "A map-first worldbuilding and campaign manager for Dungeon Masters. Lore, NPCs, quests, and faction clocks all live on the map, and Spark, an optional AI collaborator, helps prep sessions and catch continuity conflicts. Local-first, with everything stored in the browser.",
-    techStack: ["React", "TypeScript", "Leaflet", "Zustand", "Dexie.js", "Claude API"],
+      "A map-first campaign manager for Dungeon Masters, with Spark, an optional AI librarian that files what happened at the table, keeps a ledger of what's true in the world and flags contradictions. The DM always has the final word, and the whole thing works without AI.",
+    techStack: ["React", "TypeScript", "Vite", "Leaflet", "Dexie.js", "Zustand", "Supabase", "MCP"],
+    liveDemoUrl: "https://cartomancer-phi.vercel.app",
     thumbnail: "/projects/cartomancer-session.jpg",
-    status: "in-progress",
+    status: "live",
+    active: true,
   },
   {
     slug: "swesso",

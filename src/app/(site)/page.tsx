@@ -19,7 +19,7 @@ const primaryButton =
 const textLink = "link-underline inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:text-accent";
 
 export default function Home() {
-  const building = projects.find((p) => p.status === "in-progress");
+  const building = projects.find((p) => p.active || p.status === "in-progress");
   const swesso = projects.find((p) => p.slug === "swesso")!;
   const swessoCase = swesso.caseStudy;
 
