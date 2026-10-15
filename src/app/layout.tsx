@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Sora, DM_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import Navbar from "@/components/navbar";
-import Footer from "@/components/footer";
 import "./globals.css";
 
 const sora = Sora({
@@ -44,11 +42,7 @@ export default function RootLayout({
       className={`${sora.variable} ${dmSans.variable} h-full antialiased`}
     >
       <body className="grain flex min-h-full flex-col font-body">
-        <Navbar />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-          {children}
-        </main>
-        <Footer />
+        {children}
         <Analytics />
       </body>
     </html>

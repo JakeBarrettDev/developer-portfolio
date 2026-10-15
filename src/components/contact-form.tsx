@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Send } from "lucide-react";
-import { sendMessage } from "@/app/contact/action";
+import { sendMessage } from "@/app/(site)/contact/action";
 
 export default function ContactForm() {
   const [state, formAction, isPending] = useActionState(sendMessage, {

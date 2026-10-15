@@ -166,7 +166,9 @@ function locatorNote(s: Suggestion): Note {
     case "scoped":
       return {
         title: "Scoping instead of nth()",
-        body: `${d.count ?? "Several"} elements match on their own. Instead of .nth(), which breaks when the order changes, the locator first narrows to the ${d.scopeRole}${d.hasText ? ` containing '${d.hasText}'` : ""}.`,
+        body: `${d.count ?? "Several"} elements match on their own${
+          d.outside ? `, including ${d.outside === 1 ? "one" : d.outside} the app never rendered: Next.js adds a hidden route announcer to every page` : ""
+        }. Instead of .nth(), which breaks when the order changes, the locator first narrows to the ${d.scopeRole}${d.hasText ? ` containing '${d.hasText}'` : ""}.`,
         docs: DOCS.filter,
       };
     case "css":

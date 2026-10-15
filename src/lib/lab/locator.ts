@@ -39,6 +39,8 @@ export interface Suggestion {
     scopeRole?: string;
     hasText?: string;
     inner?: Strategy;
+    /** How many of the colliding matches live outside the store's own markup. */
+    outside?: number;
   };
 }
 
@@ -56,11 +58,11 @@ function matches(text: string, m: Matcher): boolean {
   return t.toLowerCase().includes(normalize(m.value).toLowerCase());
 }
 
-function descendants(scope: Element): Element[] {
+function descendants(scope: ParentNode): Element[] {
   return Array.from(scope.querySelectorAll("*")).filter(isVisible);
 }
 
-function queryPart(scope: Element, part: Exclude<LocatorPart, { by: "filter" }>): Element[] {
+function queryPart(scope: ParentNode, part: Exclude<LocatorPart, { by: "filter" }>): Element[] {
   switch (part.by) {
     case "role":
       return descendants(scope).filter(
@@ -82,20 +84,34 @@ function queryPart(scope: Element, part: Exclude<LocatorPart, { by: "filter" }>)
   }
 }
 
-/** Resolves a locator chain to the elements it matches inside `root`. */
-export function resolve(parts: LocatorPart[], root: Element): Element[] {
-  let current: Element[] = [root];
+/** Resolves a locator chain to the elements it matches inside the given root(s). */
+export function resolve(parts: LocatorPart[], roots: ParentNode | ParentNode[]): Element[] {
+  let current: ParentNode[] = Array.isArray(roots) ? roots : [roots];
   for (const part of parts) {
     if (part.by === "filter") {
       const needle = part.hasText.toLowerCase();
-      current = current.filter((el) => normalize(el.textContent).toLowerCase().includes(needle));
+      current = current.filter((node) => normalize(node.textContent).toLowerCase().includes(needle));
     } else {
       const next = new Set<Element>();
       for (const scope of current) for (const el of queryPart(scope, part)) next.add(el);
       current = Array.from(next);
     }
   }
-  return current;
+  return current.filter((node): node is Element => node instanceof Element);
+}
+
+/**
+ * Everything an exported test can see on /lab/sandbox. That page has no site
+ * chrome, so it's the store plus whatever the framework injects at document
+ * level: Next.js's route announcer, an open shadow root with role="alert"
+ * (Playwright's locators pierce open shadow roots). Checking uniqueness
+ * against the store alone produced locators that hit strict-mode violations.
+ */
+export function pageRoots(root: Element): ParentNode[] {
+  const injected = Array.from(root.ownerDocument.querySelectorAll("next-route-announcer"))
+    .map((host) => host.shadowRoot)
+    .filter((shadow): shadow is ShadowRoot => shadow !== null);
+  return [root, ...injected];
 }
 
 // ── Suggesting ──
@@ -161,8 +177,8 @@ function candidates(el: Element, opts: SuggestOptions): Suggestion[] {
   return out;
 }
 
-function isUnique(parts: LocatorPart[], el: Element, root: Element): boolean {
-  const hits = resolve(parts, root);
+function isUnique(parts: LocatorPart[], el: Element, roots: ParentNode[]): boolean {
+  const hits = resolve(parts, roots);
   return hits.length === 1 && hits[0] === el;
 }
 
@@ -173,7 +189,7 @@ function distinguishingText(scope: Element): string | null {
   return text || null;
 }
 
-function scopeLocators(scope: Element, root: Element): { parts: LocatorPart[]; hasText?: string }[] {
+function scopeLocators(scope: Element, roots: ParentNode[]): { parts: LocatorPart[]; hasText?: string }[] {
   const role = getRole(scope);
   const out: { parts: LocatorPart[]; hasText?: string }[] = [];
   if (role) {
@@ -185,7 +201,7 @@ function scopeLocators(scope: Element, root: Element): { parts: LocatorPart[]; h
   }
   const testId = scope.getAttribute("data-testid");
   if (testId) out.push({ parts: [{ by: "testid", id: testId }] });
-  return out.filter((s) => isUnique(s.parts, scope, root));
+  return out.filter((s) => isUnique(s.parts, scope, roots));
 }
 
 function cssPath(el: Element, root: Element): string {
@@ -201,16 +217,20 @@ function cssPath(el: Element, root: Element): string {
   return segments.join(" > ");
 }
 
-/** Picks the most resilient locator that uniquely identifies `el` within `root`. */
+/**
+ * Picks the most resilient locator that uniquely identifies `el`, where
+ * `root` is the store and uniqueness is checked against the whole exported page.
+ */
 export function suggestLocator(el: Element, root: Element, opts: SuggestOptions = {}): Suggestion {
+  const roots = pageRoots(root);
   const own = candidates(el, opts);
 
   for (const c of own) {
-    if (!isUnique(c.parts, el, root)) continue;
+    if (!isUnique(c.parts, el, roots)) continue;
     if (c.strategy === "role-exact") {
       // Only worth calling out when the loose match actually collided with something.
       const { role } = c.parts[0] as Extract<LocatorPart, { by: "role" }>;
-      const loose = resolve([{ by: "role", role, name: { kind: "string", value: getAccessibleName(el) } }], root);
+      const loose = resolve([{ by: "role", role, name: { kind: "string", value: getAccessibleName(el) } }], roots);
       const other = loose.find((x) => x !== el);
       return { ...c, detail: { conflict: other ? getAccessibleName(other) : undefined } };
     }
@@ -221,15 +241,22 @@ export function suggestLocator(el: Element, root: Element, opts: SuggestOptions 
   for (let scope = el.parentElement; scope && scope !== root; scope = scope.parentElement) {
     const scopeRole = getRole(scope);
     if (!(scopeRole && SCOPE_ROLES.has(scopeRole)) && !scope.hasAttribute("data-testid")) continue;
-    for (const s of scopeLocators(scope, root)) {
+    for (const s of scopeLocators(scope, roots)) {
       for (const c of own) {
         if (c.strategy === "role-exact") continue;
         const parts = [...s.parts, ...c.parts];
-        if (isUnique(parts, el, root)) {
+        if (isUnique(parts, el, roots)) {
+          const collisions = resolve(c.parts, roots);
           return {
             parts,
             strategy: "scoped",
-            detail: { count: resolve(c.parts, root).length, scopeRole: scopeRole ?? "container", hasText: s.hasText, inner: c.strategy },
+            detail: {
+              count: collisions.length,
+              outside: collisions.filter((hit) => !root.contains(hit)).length,
+              scopeRole: scopeRole ?? "container",
+              hasText: s.hasText,
+              inner: c.strategy,
+            },
           };
         }
       }
