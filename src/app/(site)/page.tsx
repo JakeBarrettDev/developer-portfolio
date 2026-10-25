@@ -315,6 +315,22 @@ export default function Home() {
                 maintaining a Squarespace site I built from scratch.
               </p>
             </div>
+            <dl className="mt-8 max-w-2xl">
+              <dt className="eyebrow text-muted-foreground">Also working with</dt>
+              <dd className="mt-1 font-mono text-xs leading-relaxed text-muted-foreground">
+                {[
+                  "Godot 4 (GDScript)",
+                  "Python",
+                  "Blender",
+                  "JSON Schema",
+                  "ENet networking",
+                  "Opus audio",
+                  "Whisper speech-to-text",
+                  "Open-source voice cloning (Qwen3-TTS, Chatterbox)",
+                  "Claude Code (multi-agent workflows)",
+                ].join(" · ")}
+              </dd>
+            </dl>
             <p className="eyebrow mt-8 text-muted-foreground">
               Off the clock: playing music, sketching the next project, and training Finn, my corgi.
             </p>
